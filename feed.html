@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hooked - Feed</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/pages/feed.css">
+</head>
+
+<body x-data="feedApp()" x-init="init()" x-cloak>
+
+    <!-- Header -->
+    <header class="nav-header">
+        <div class="container nav-container">
+            <a href="feed.html" class="logo">
+                <div class="logo-icon">🎣</div>
+                <span>Hooked</span>
+            </a>
+
+            <nav class="nav-links" x-show="user">
+                <a href="feed.html" class="nav-link active">Inicio</a>
+                <a href="perfil.html" class="nav-link">Perfil</a>
+                <button @click="logout()" class="btn btn-ghost btn-sm">Salir</button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container layout layout-sidebar pb-safe">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" x-show="user">
+
+            <div class="sidebar-user" x-show="user">
+                <div class="avatar">
+                    <span x-text="user?.nombre?.charAt(0)?.toUpperCase() || '?'"></span>
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name" x-text="user?.nombre || 'Usuario'"></div>
+                    <div class="sidebar-user-email" x-text="user?.email || ''"></div>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <div class="sidebar-title">Categorías</div>
+
+                <div class="trending-item" @click="filterByCategory('todo')">
+                    <div class="trending-rank" style="background: var(--accent-ocean); color: white;">#</div>
+                    <div class="trending-info">
+                        <div class="trending-name">Todas</div>
+                    </div>
+                </div>
+
+                <template x-for="cat in (categorias || [])" :key="cat.id">
+                    <div class="trending-item" @click="filterByCategory(cat.id)">
+                        <div class="trending-rank" x-text="cat.id"></div>
+                        <div class="trending-info">
+                            <div class="trending-name" x-text="cat.nombre"></div>
+                            <div class="trending-count" x-text="cat.descripcion || ''"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Loading -->
+            <template x-if="loading">
+                <div>
+                    <div class="loading-skeleton">
+                        <div class="skeleton-header">
+                            <div class="skeleton-avatar"></div>
+                            <div class="skeleton-lines">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line" style="width: 30%;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton-image"></div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Empty State -->
+            <div class="empty-state" x-show="!loading && posts.length === 0">
+                <div class="empty-state-icon">🎣</div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">No hay capturas aún</h3>
+                <p style="margin-bottom: 1.5rem;">Sé el primero en compartir tu experiencia</p>
+                <a href="crear-post.html" class="btn btn-primary">Crear primer post</a>
+            </div>
+
+            <!-- Posts -->
+            <div class="feed-grid" x-show="!loading && posts.length > 0">
+                <template x-for="post in (posts || [])" :key="post.id || $index">
+                    <article class="post-card animate-fade-in">
+
+                        <!-- Header -->
+                        <div class="post-header">
+                            <div class="avatar">
+                                <!-- CORREGIDO: Validación estricta -->
+                                <template x-if="post.usuario && post.usuario.foto_perfil">
+                                    <img :src="post.usuario.foto_perfil" :alt="post.usuario.nombre || 'Usuario'">
+                                </template>
+                                <template x-if="!(post.usuario && post.usuario.foto_perfil)">
+                                    <span
+                                        x-text="((post.usuario && post.usuario.nombre) || '?').charAt(0).toUpperCase()"></span>
+                                </template>
+                            </div>
+                            <div class="post-meta">
+                                <a :href="'perfil.html?id=' + (post.usuario ? post.usuario.id : '')" class="post-author"
+                                    x-text="(post.usuario && post.usuario.nombre) || 'Usuario'"></a>
+                                <div class="post-time" x-text="formatDate(post.fecha_creacion)"></div>
+                            </div>
+                            <span class="post-category"
+                                x-text="(post.categoria && post.categoria.nombre) || 'General'"></span>
+                        </div>
+
+                        <!-- Imagen del post -->
+                        <template x-if="post.foto_link">
+                            <img :src="post.foto_link" class="post-image" :alt="post.titulo || 'Imagen'">
+                        </template>
+
+                        <!-- Contenido -->
+                        <div class="post-content">
+                            <h3 class="post-title" x-text="post.titulo || 'Sin título'"></h3>
+                            <p class="post-text" x-text="post.contenido || ''"></p>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="post-actions">
+                            <button class="action-btn" :class="{ 'active': post.liked }" @click="toggleLike(post)"
+                                :disabled="!post.id">
+                                <span x-text="post.liked ? '❤️' : '🤍'"></span>
+                                <span x-text="post.like_count || 0"></span>
+                            </button>
+
+                            <a :href="'post.html?id=' + (post.id || '')" class="action-btn">
+                                <span>💬</span>
+                                <span>Comentar</span>
+                            </a>
+
+                            <button class="action-btn" @click="sharePost(post)">
+                                <span>🔗</span>
+                                <span>Compartir</span>
+                            </button>
+                        </div>
+                    </article>
+                </template>
+            </div>
+
+            <!-- Load More -->
+            <div style="text-align: center; padding: 2rem;" x-show="!loading && hasMorePosts">
+                <button @click="loadMore()" class="btn btn-secondary" :disabled="loadingMore">
+                    <span x-show="!loadingMore">Cargar más</span>
+                    <span x-show="loadingMore">Cargando...</span>
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <a href="crear-post.html" class="fab">+</a>
+
+    <nav class="mobile-nav">
+        <a href="feed.html" class="mobile-nav-link active">🏠<span>Inicio</span></a>
+        <a href="crear-post.html" class="mobile-nav-link">➕<span>Crear</span></a>
+        <a href="perfil.html" class="mobile-nav-link">👤<span>Perfil</span></a>
+    </nav>
+
+    <div class="toast-container" x-data="{ toasts: [] }"
+        @toast.window="toasts.push($event.detail); setTimeout(() => toasts.shift(), 3000)">
+        <template x-for="toast in toasts" :key="toast.message">
+            <div class="toast" :class="toast.type" x-text="toast.message"></div>
+        </template>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/pages/feed.js"></script>
+</body>
+
+</html>

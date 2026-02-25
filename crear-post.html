@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hooked - Crear Publicación</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages/create-post.css">
+</head>
+<body x-data="createPost()" x-init="init()">
+
+  <header class="nav-header">
+    <div class="container nav-container">
+      <a href="feed.html" class="logo">
+        <div class="logo-icon">🎣</div>
+        <span>Hooked</span>
+      </a>
+      
+      <button @click="submitPost()" class="btn btn-primary btn-sm" :disabled="!canSubmit">
+        <span x-show="!isLoading">Publicar</span>
+        <span x-show="isLoading">Publicando...</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="container" style="padding-top: calc(var(--header-height) + 1rem);">
+    <div class="create-container">
+      
+      <!-- Image Upload -->
+      <div 
+        class="image-upload" 
+        :class="{ 'has-image': imagePreview }"
+        @click="$refs.fileInput.click()"
+      >
+        <img x-show="imagePreview" :src="imagePreview" class="image-preview">
+        
+        <div x-show="!imagePreview" class="upload-placeholder">
+          <div class="upload-placeholder-icon">📷</div>
+          <div class="upload-hint">Toca para agregar foto</div>
+        </div>
+        
+        <input 
+          type="file" 
+          x-ref="fileInput" 
+          class="file-input"
+          @change="handleImageSelect($event)" 
+          accept="image/*"
+        >
+      </div>
+
+      <!-- Form -->
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input 
+          type="text" 
+          class="form-input" 
+          x-model="form.titulo" 
+          placeholder="¿Qué capturaste hoy?" 
+          maxlength="100"
+        >
+        <div class="char-count">
+          <span x-text="form.titulo.length"></span>/100
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea 
+          class="form-textarea" 
+          x-model="form.contenido" 
+          placeholder="Cuéntanos los detalles..." 
+          maxlength="2000"
+        ></textarea>
+        <div class="char-count">
+          <span x-text="form.contenido.length"></span>/2000
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-select" x-model="form.categoria_id">
+          <option value="">Selecciona categoría</option>
+          <template x-for="cat in categorias" :key="cat.id">
+            <option :value="cat.id" x-text="cat.nombre"></option>
+          </template>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast-container" x-data="{ toasts: [] }" @toast.window="toasts.push($event.detail); setTimeout(() => toasts.shift(), 3000)">
+    <template x-for="toast in toasts" :key="toast.message">
+      <div class="toast" :class="toast.type" x-text="toast.message"></div>
+    </template>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pages/create-post.js"></script>
+</body>
+</html>

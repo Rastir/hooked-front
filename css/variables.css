@@ -1,0 +1,60 @@
+:root {
+  /* Dark Mode Default (Deep Ocean Theme) */
+  --bg-primary: #0a0f1c;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1f2937;
+  --bg-elevated: #374151;
+  
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  
+  --accent-ocean: #0ea5e9;
+  --accent-ocean-hover: #0284c7;
+  --accent-fishing: #10b981;
+  --accent-fishing-hover: #059669;
+  --accent-sunset: #f59e0b;
+  --accent-danger: #ef4444;
+  
+  --border-color: #374151;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  
+  --header-height: 4rem;
+  --max-width: 1200px;
+  --sidebar-width: 280px;
+}
+
+/* Light mode (opcional toggle futuro) */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-tertiary: #e5e7eb;
+  --bg-elevated: #d1d5db;
+  
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  
+  --border-color: #e5e7eb;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* System preference detection (fallback) */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    /* hereda light o se fuerza dark abajo */
+  }
+}
+
+/* Forzamos dark mode por defecto independiente del sistema */
+:root {
+  color-scheme: dark;
+}
