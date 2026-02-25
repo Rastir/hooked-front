@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hooked - Inicia Sesión</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+</head>
+<body x-data="{ activeTab: 'login' }">
+
+  <div class="auth-layout">
+    <div class="auth-container">
+      <!-- Logo -->
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <a href="#" class="logo" style="justify-content: center; font-size: 2rem;">
+          <div class="logo-icon" style="width: 3.5rem; height: 3.5rem;">
+            <span style="font-size: 1.75rem;">🎣</span>
+          </div>
+          <span>Hooked</span>
+        </a>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.875rem;">
+          La red social para pescadores
+        </p>
+      </div>
+
+      <div class="auth-card" x-data="auth">
+        
+        <!-- Tabs -->
+        <div style="display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+          <button 
+            @click="activeTab = 'login'" 
+            :class="activeTab === 'login' ? 'tab-active' : 'tab-inactive'"
+            style="flex: 1; padding: 0.75rem; background: none; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s;"
+            :style="activeTab === 'login' ? 'color: var(--accent-ocean); border-bottom: 2px solid var(--accent-ocean);' : 'color: var(--text-secondary);'"
+          >
+            Iniciar Sesión
+          </button>
+          <button 
+            @click="activeTab = 'register'"
+            :class="activeTab === 'register' ? 'tab-active' : 'tab-inactive'"
+            style="flex: 1; padding: 0.75rem; background: none; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s;"
+            :style="activeTab === 'register' ? 'color: var(--accent-ocean); border-bottom: 2px solid var(--accent-ocean);' : 'color: var(--text-secondary);'"
+          >
+            Crear Cuenta
+          </button>
+        </div>
+
+        <!-- Error global -->
+        <div 
+          x-show="error" 
+          x-transition
+          style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem;"
+          x-text="error"
+        ></div>
+
+        <!-- Formulario Login -->
+        <form x-show="activeTab === 'login'" @submit.prevent="login" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label">Correo electrónico</label>
+            <input 
+              type="email" 
+              class="input-field" 
+              x-model="loginForm.email"
+              placeholder="tu@email.com"
+              required
+            >
+          </div>
+
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label">Contraseña</label>
+            <input 
+              type="password" 
+              class="input-field" 
+              x-model="loginForm.password"
+              placeholder="••••••••"
+              required
+            >
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn btn-primary btn-full"
+            :disabled="isLoading"
+            style="margin-top: 0.5rem;"
+          >
+            <span x-show="!isLoading">Entrar</span>
+            <span x-show="isLoading">Cargando...</span>
+          </button>
+        </form>
+
+        <!-- Formulario Registro -->
+        <form x-show="activeTab === 'register'" @submit.prevent="register" style="display: none; flex-direction: column; gap: 1rem;" :style="activeTab === 'register' ? 'display: flex;' : ''">
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label">Nombre completo</label>
+            <input 
+              type="text" 
+              class="input-field" 
+              x-model="registerForm.nombre"
+              placeholder="Juan Pérez"
+              required
+            >
+          </div>
+
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label">Correo electrónico</label>
+            <input 
+              type="email" 
+              class="input-field" 
+              x-model="registerForm.email"
+              placeholder="tu@email.com"
+              required
+            >
+          </div>
+
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label">Contraseña</label>
+            <input 
+              type="password" 
+              class="input-field" 
+              x-model="registerForm.password"
+              placeholder="Mínimo 6 caracteres"
+              required
+              minlength="6"
+            >
+          </div>
+
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label">Confirmar contraseña</label>
+            <input 
+              type="password" 
+              class="input-field" 
+              x-model="registerForm.confirmPassword"
+              placeholder="Repite tu contraseña"
+              required
+            >
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn btn-fishing btn-full"
+            :disabled="isLoading"
+            style="margin-top: 0.5rem;"
+          >
+            <span x-show="!isLoading">Crear cuenta</span>
+            <span x-show="isLoading">Registrando...</span>
+          </button>
+        </form>
+
+      </div>
+
+      <p style="text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.75rem;">
+        © 2026 Hooked. Conectando pescadores.
+      </p>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" x-data="{ toasts: [] }" @toast.window="toasts.push($event.detail); setTimeout(() => toasts.shift(), 3000)">
+    <template x-for="toast in toasts" :key="toast.message">
+      <div class="toast" :class="toast.type" x-text="toast.message"></div>
+    </template>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
