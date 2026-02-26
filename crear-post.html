@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/pages/create-post.css">
+  
 </head>
 <body x-data="createPost()" x-init="init()">
 
@@ -27,8 +28,9 @@
       </a>
       
       <button @click="submitPost()" class="btn btn-primary btn-sm" :disabled="!canSubmit">
-        <span x-show="!isLoading">Publicar</span>
-        <span x-show="isLoading">Publicando...</span>
+        <span x-show="!isLoading && !uploadingImage">Publicar</span>
+        <span x-show="uploadingImage">Subiendo imagen...</span>
+        <span x-show="isLoading && !uploadingImage">Publicando...</span>
       </button>
     </div>
   </header>
@@ -40,11 +42,27 @@
       <div 
         class="image-upload" 
         :class="{ 'has-image': imagePreview }"
-        @click="$refs.fileInput.click()"
+        @click="!imagePreview && $refs.fileInput.click()"
+        style="position: relative;"
       >
-        <img x-show="imagePreview" :src="imagePreview" class="image-preview">
+        <div x-show="uploadingImage" class="upload-loading">
+          <div class="spinner"></div>
+          <div>Subiendo imagen...</div>
+        </div>
         
-        <div x-show="!imagePreview" class="upload-placeholder">
+        <img x-show="imagePreview && !uploadingImage" :src="imagePreview" class="image-preview">
+        
+        <button 
+          x-show="imagePreview && !uploadingImage" 
+          type="button"
+          class="remove-image-btn" 
+          @click.stop="removeImage()"
+          title="Eliminar imagen"
+        >
+          ×
+        </button>
+        
+        <div x-show="!imagePreview && !uploadingImage" class="upload-placeholder">
           <div class="upload-placeholder-icon">📷</div>
           <div class="upload-hint">Toca para agregar foto</div>
         </div>
@@ -60,7 +78,7 @@
 
       <!-- Form -->
       <div class="form-group">
-        <label class="form-label">Título *</label>
+        <label class="form-label">Título <span class="required">*</span></label>
         <input 
           type="text" 
           class="form-input" 
@@ -74,21 +92,27 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Descripción</label>
+        <label class="form-label">Descripción <span class="required">*</span></label>
         <textarea 
           class="form-textarea" 
           x-model="form.contenido" 
           placeholder="Cuéntanos los detalles..." 
           maxlength="2000"
+          rows="5"
         ></textarea>
         <div class="char-count">
           <span x-text="form.contenido.length"></span>/2000
         </div>
+        <!-- ← NUEVO: Validación visual -->
+        <div class="hint" :style="form.contenido.length < 10 ? 'color: #ef4444;' : ''">
+          Mínimo 10 caracteres (<span x-text="form.contenido.length"></span>/10)
+        </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Categoría</label>
-        <select class="form-select" x-model="form.categoria_id">
+        <label class="form-label">Categoría <span class="required">*</span></label>
+        <!-- ← CAMBIO: x-model="form.categoriaId" en lugar de categoria_id -->
+        <select class="form-select" x-model="form.categoriaId" required>
           <option value="">Selecciona categoría</option>
           <template x-for="cat in categorias" :key="cat.id">
             <option :value="cat.id" x-text="cat.nombre"></option>

@@ -17,6 +17,25 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/pages/feed.css">
+
+    <!-- ← FIX: Estilo para prevenir flash de contenido no inicializado -->
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* ← FIX: Sidebar siempre visible en desktop, user opcional */
+        @media (min-width: 1024px) {
+            .sidebar {
+                display: block !important;
+            }
+        }
+
+        /* ← FIX: Mobile nav siempre visible */
+        .mobile-nav {
+            display: flex !important;
+        }
+    </style>
 </head>
 
 <body x-data="feedApp()" x-init="init()" x-cloak>
@@ -29,7 +48,8 @@
                 <span>Hooked</span>
             </a>
 
-            <nav class="nav-links" x-show="user">
+            <!-- ← FIX: Nav links siempre visibles si hay token, no solo si hay user -->
+            <nav class="nav-links" x-show="user || isInitialized">
                 <a href="feed.html" class="nav-link active">Inicio</a>
                 <a href="perfil.html" class="nav-link">Perfil</a>
                 <button @click="logout()" class="btn btn-ghost btn-sm">Salir</button>
@@ -39,23 +59,23 @@
 
     <div class="container layout layout-sidebar pb-safe">
 
-        <!-- Sidebar -->
-        <aside class="sidebar" x-show="user">
-
-            <div class="sidebar-user" x-show="user">
+        <!-- Sidebar ← FIX: Siempre visible, user info condicional -->
+        <aside class="sidebar">
+            <div class="sidebar-user">
                 <div class="avatar">
                     <span x-text="user?.nombre?.charAt(0)?.toUpperCase() || '?'"></span>
                 </div>
                 <div class="sidebar-user-info">
-                    <div class="sidebar-user-name" x-text="user?.nombre || 'Usuario'"></div>
-                    <div class="sidebar-user-email" x-text="user?.email || ''"></div>
+                    <div class="sidebar-user-name" x-text="user?.nombre || 'Cargando...'"></div>
+                    <div class="sidebar-user-email" x-text="user?.email || ''" x-show="user?.email"></div>
                 </div>
             </div>
 
             <div class="sidebar-card">
                 <div class="sidebar-title">Categorías</div>
 
-                <div class="trending-item" @click="filterByCategory('todo')">
+                <!-- ← FIX: @click.prevent para evitar refresh -->
+                <div class="trending-item" @click.prevent="filterByCategory('todo')">
                     <div class="trending-rank" style="background: var(--accent-ocean); color: white;">#</div>
                     <div class="trending-info">
                         <div class="trending-name">Todas</div>
@@ -63,7 +83,8 @@
                 </div>
 
                 <template x-for="cat in (categorias || [])" :key="cat.id">
-                    <div class="trending-item" @click="filterByCategory(cat.id)">
+                    <!-- ← FIX: @click.prevent en cada categoría -->
+                    <div class="trending-item" @click.prevent="filterByCategory(cat.id)">
                         <div class="trending-rank" x-text="cat.id"></div>
                         <div class="trending-info">
                             <div class="trending-name" x-text="cat.nombre"></div>
@@ -78,9 +99,19 @@
         <main class="main-content">
 
             <!-- Loading -->
-            <template x-if="loading">
+            <template x-if="loading && posts.length === 0">
                 <div>
                     <div class="loading-skeleton">
+                        <div class="skeleton-header">
+                            <div class="skeleton-avatar"></div>
+                            <div class="skeleton-lines">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line" style="width: 30%;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton-image"></div>
+                    </div>
+                    <div class="loading-skeleton" style="margin-top: 1rem;">
                         <div class="skeleton-header">
                             <div class="skeleton-avatar"></div>
                             <div class="skeleton-lines">
@@ -109,7 +140,6 @@
                         <!-- Header -->
                         <div class="post-header">
                             <div class="avatar">
-                                <!-- CORREGIDO: Validación estricta -->
                                 <template x-if="post.usuario && post.usuario.foto_perfil">
                                     <img :src="post.usuario.foto_perfil" :alt="post.usuario.nombre || 'Usuario'">
                                 </template>
@@ -129,7 +159,7 @@
 
                         <!-- Imagen del post -->
                         <template x-if="post.foto_link">
-                            <img :src="post.foto_link" class="post-image" :alt="post.titulo || 'Imagen'">
+                            <img :src="post.foto_link" class="post-image" :alt="post.titulo || 'Imagen'" loading="lazy">
                         </template>
 
                         <!-- Contenido -->
@@ -148,7 +178,7 @@
 
                             <a :href="'post.html?id=' + (post.id || '')" class="action-btn">
                                 <span>💬</span>
-                                <span>Comentar</span>
+                                <span x-text="(post.comentarios_count || 0) + ' comentarios'">Comentar</span>
                             </a>
 
                             <button class="action-btn" @click="sharePost(post)">
@@ -161,7 +191,7 @@
             </div>
 
             <!-- Load More -->
-            <div style="text-align: center; padding: 2rem;" x-show="!loading && hasMorePosts">
+            <div style="text-align: center; padding: 2rem;" x-show="!loading && hasMorePosts && posts.length > 0">
                 <button @click="loadMore()" class="btn btn-secondary" :disabled="loadingMore">
                     <span x-show="!loadingMore">Cargar más</span>
                     <span x-show="loadingMore">Cargando...</span>
@@ -171,8 +201,7 @@
         </main>
     </div>
 
-    <a href="crear-post.html" class="fab">+</a>
-
+    <!-- ← FIX: Mobile nav siempre visible, no condicional -->
     <nav class="mobile-nav">
         <a href="feed.html" class="mobile-nav-link active">🏠<span>Inicio</span></a>
         <a href="crear-post.html" class="mobile-nav-link">➕<span>Crear</span></a>

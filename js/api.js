@@ -1,4 +1,4 @@
-// js/api.js - CORREGIDO CON DEBUG
+// js/api.js - COMPLETO CON FIXES
 class ApiClient {
   constructor() {
     this.baseURL = CONFIG.API_BASE_URL;
@@ -10,9 +10,11 @@ class ApiClient {
   }
 
   getHeaders(contentType = 'application/json') {
-    const headers = {
-      'Content-Type': contentType
-    };
+    const headers = {};
+    
+    if (contentType) {
+      headers['Content-Type'] = contentType;
+    }
     
     const token = this.getToken();
     if (token) {
@@ -25,21 +27,24 @@ class ApiClient {
     return headers;
   }
 
-  async handleResponse(response) {
+  async handleResponse(response, originalOptions = null) {
     console.log('[API] Respuesta HTTP:', response.status, response.statusText);
     
-    // Si es 401, intentar refresh o redirigir
     if (response.status === 401) {
       console.warn('[API] Recibido 401, intentando refresh token');
       const refreshed = await this.tryRefreshToken();
       if (!refreshed) {
         console.error('[API] No se pudo refrescar token, haciendo logout');
         this.logout();
+        window.location.href = 'index.html';
         throw new Error('401 - Sesión expirada');
       }
-      // Retry la request original
-      console.log('[API] Token refrescado, reintentando request');
-      return this.retryRequest(response.url, response.requestOptions);
+      
+      if (originalOptions) {
+        console.log('[API] Token refrescado, reintentando request');
+        return this.retryRequest(response.url, originalOptions);
+      }
+      throw new Error('401 - No se puede reintentar');
     }
 
     if (!response.ok) {
@@ -48,7 +53,7 @@ class ApiClient {
         const error = await response.json();
         errorMessage = error.message || error.error || errorMessage;
       } catch (e) {
-        // No hay body JSON
+        errorMessage = response.statusText || errorMessage;
       }
       console.error('[API] Error en respuesta:', errorMessage);
       throw new Error(errorMessage);
@@ -56,9 +61,14 @@ class ApiClient {
 
     if (response.status === 204) return null;
     
-    const data = await response.json();
-    console.log('[API] Datos recibidos:', data);
-    return data;
+    try {
+      const data = await response.json();
+      console.log('[API] Datos recibidos:', data);
+      return data;
+    } catch (e) {
+      console.log('[API] Respuesta sin body JSON');
+      return null;
+    }
   }
 
   async tryRefreshToken() {
@@ -92,10 +102,19 @@ class ApiClient {
   }
 
   async retryRequest(url, options) {
-    return fetch(url, {
+    const newOptions = {
       ...options,
-      headers: this.getHeaders()
-    }).then(r => this.handleResponse(r));
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${this.getToken()}`
+      }
+    };
+    
+    const response = await fetch(url, newOptions);
+    if (response.status === 401) {
+      throw new Error('401 - Token refrescado pero sigue siendo inválido');
+    }
+    return this.handleResponse(response, null);
   }
 
   logout() {
@@ -107,54 +126,60 @@ class ApiClient {
 
   async get(endpoint) {
     console.log('[API] GET', endpoint);
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
+    const options = {
       method: 'GET',
       headers: this.getHeaders()
-    });
-    return this.handleResponse(response);
+    };
+    const response = await fetch(`${this.baseURL}${endpoint}`, options);
+    return this.handleResponse(response, options);
   }
 
   async post(endpoint, data) {
     console.log('[API] POST', endpoint, data);
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
+    const options = {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(data)
-    });
-    return this.handleResponse(response);
+    };
+    const response = await fetch(`${this.baseURL}${endpoint}`, options);
+    return this.handleResponse(response, options);
   }
 
   async postFormData(endpoint, formData) {
     console.log('[API] POST FormData', endpoint);
-    const headers = {};
     const token = this.getToken();
+    const headers = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
+    const options = {
       method: 'POST',
       headers,
       body: formData
-    });
-    return this.handleResponse(response);
+    };
+    
+    const response = await fetch(`${this.baseURL}${endpoint}`, options);
+    return this.handleResponse(response, options);
   }
 
   async put(endpoint, data) {
     console.log('[API] PUT', endpoint);
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
+    const options = {
       method: 'PUT',
       headers: this.getHeaders(),
       body: JSON.stringify(data)
-    });
-    return this.handleResponse(response);
+    };
+    const response = await fetch(`${this.baseURL}${endpoint}`, options);
+    return this.handleResponse(response, options);
   }
 
   async delete(endpoint) {
     console.log('[API] DELETE', endpoint);
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
+    const options = {
       method: 'DELETE',
       headers: this.getHeaders()
-    });
-    return this.handleResponse(response);
+    };
+    const response = await fetch(`${this.baseURL}${endpoint}`, options);
+    return this.handleResponse(response, options);
   }
 }
 

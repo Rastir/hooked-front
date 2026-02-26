@@ -3,6 +3,13 @@ const CONFIG = {
   // Cambiar según entorno
   API_BASE_URL: 'http://localhost:8080/api',
   
+  // ← CONFIGURACIÓN DE CLOUDINARY (ya configurado)
+  CLOUDINARY: {
+    CLOUD_NAME: 'dttzn4pzz', // ← Tu Cloud Name
+    UPLOAD_PRESET: 'hooked_unsigned', // ← El preset que ya creaste
+    API_URL: 'https://api.cloudinary.com/v1_1' // ← URL pública de la API
+  },
+  
   // Endpoints
   ENDPOINTS: {
     AUTH: {
