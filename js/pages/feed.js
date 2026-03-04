@@ -9,7 +9,7 @@ document.addEventListener('alpine:init', () => {
     hasMorePosts: true,
     currentPage: 0,
     selectedCategory: null,
-    isInitialized: false, // ← NUEVO: Para controlar renderizado
+    isInitialized: false,
 
     async init() {
       console.log('[FEED] Inicializando feed app');
@@ -26,7 +26,6 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
-      // ← FIX CRÍTICO: Parsear user ANTES de cargar datos
       if (userData && userData !== 'undefined' && userData !== 'null') {
         try {
           this.user = JSON.parse(userData);
@@ -37,19 +36,16 @@ document.addEventListener('alpine:init', () => {
         }
       } else {
         console.warn('[FEED] No hay datos de usuario en localStorage');
-        // Intentar decodificar del token JWT como fallback
         this.user = this.decodeTokenUser(token);
       }
 
-      // Cargar datos
       await this.loadCategorias();
       await this.loadPosts();
 
-      this.isInitialized = true; // ← NUEVO: Marcar como inicializado
+      this.isInitialized = true;
       console.log('[FEED] Init completado. Posts:', this.posts.length, 'User:', this.user);
     },
 
-    // ← NUEVO: Decodificar user desde JWT si no hay en localStorage
     decodeTokenUser(token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -94,7 +90,6 @@ document.addEventListener('alpine:init', () => {
           newPosts = [];
         }
 
-        // ← FIX: Asegurar que cada post tenga usuario válido
         newPosts = newPosts.map(post => this.mapearPostDesdeBackend(post));
 
         if (this.currentPage === 0) {
@@ -120,26 +115,23 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    // CORREGIDO: Mapear likedByCurrentUser del backend a liked del frontend
     mapearPostDesdeBackend(post) {
       return {
         id: post.id,
         titulo: post.titulo,
         contenido: post.contenido,
-        // ← CAMBIO: fotoLink (backend) → foto_link (frontend)
         foto_link: post.fotoLink || post.foto_link || null,
-        // ← CAMBIO: fechaCreacion (backend) → fecha_creacion (frontend)
         fecha_creacion: post.fechaCreacion || post.fecha_creacion || null,
-        // ← CAMBIO: likeCount (backend) → like_count (frontend)
         like_count: post.likeCount || post.like_count || 0,
-        liked: post.liked || false,
-        // ← CAMBIO: autor (backend) → usuario (frontend)
+        // ← CORREGIDO: Mapear likedByCurrentUser del backend
+        liked: post.likedByCurrentUser !== undefined ? post.likedByCurrentUser : (post.liked || false),
         usuario: post.autor ? {
           id: post.autor.id,
           nombre: post.autor.nombre,
           email: post.autor.email,
           foto_perfil: post.autor.fotoPerfil || null
         } : post.usuario || null,
-        // ← CAMBIO: categoria viene igual pero verificamos ambos formatos
         categoria: post.categoria || null,
         comentarios_count: post.comentariosCount || 0
       };
@@ -168,7 +160,6 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // ← FIX CRÍTICO: Prevenir refresh de página
     filterByCategory(catId, event) {
       if (event) {
         event.preventDefault();
@@ -182,19 +173,17 @@ document.addEventListener('alpine:init', () => {
       this.posts = [];
       this.hasMorePosts = true;
 
-      // Usar nextTick para asegurar reactividad
       this.$nextTick(() => {
         this.loadPosts();
       });
 
-      // Actualizar URL sin recargar
       const url = catId && catId !== 'todo'
         ? `?categoria=${catId}`
         : 'feed.html';
       history.pushState({ category: catId }, '', url);
     },
 
-    // ← FIX CRÍTICO: Toggle like con optimistic UI y manejo de errores
+    // CORREGIDO: Toggle like con mapeo correcto de la respuesta
     async toggleLike(post) {
       if (!post || !post.id) {
         console.error('[FEED] Post inválido para like');
@@ -203,11 +192,10 @@ document.addEventListener('alpine:init', () => {
 
       console.log('[FEED] Toggle like en post:', post.id, 'Estado actual:', post.liked);
 
-      // Guardar estado anterior
       const previousLiked = post.liked;
       const previousCount = post.like_count || 0;
 
-      // Optimistic UI: actualizar inmediatamente
+      // Optimistic UI
       post.liked = !post.liked;
       post.like_count = post.liked ? previousCount + 1 : Math.max(0, previousCount - 1);
 
@@ -215,36 +203,40 @@ document.addEventListener('alpine:init', () => {
         const response = await api.post(`${CONFIG.ENDPOINTS.POSTS}/${post.id}/like`);
         console.log('[FEED] Like response:', response);
 
-        // Sincronizar con respuesta del servidor si existe
+        // ← CORREGIDO: Mapear correctamente la respuesta del backend
         if (response) {
-          if (response.liked !== undefined) post.liked = response.liked;
-          if (response.like_count !== undefined) post.like_count = response.like_count;
+          // El backend devuelve likedByCurrentUser, no liked
+          if (response.likedByCurrentUser !== undefined) {
+            post.liked = response.likedByCurrentUser;
+          } else if (response.liked !== undefined) {
+            post.liked = response.liked;
+          }
+          
+          // El backend devuelve likeCount (camelCase)
+          if (response.likeCount !== undefined) {
+            post.like_count = response.likeCount;
+          } else if (response.like_count !== undefined) {
+            post.like_count = response.like_count;
+          }
         }
 
       } catch (err) {
         console.error('[FEED] Error en like:', err);
 
-        // Revertir cambios en caso de error
+        // Revertir cambios
         post.liked = previousLiked;
         post.like_count = previousCount;
 
-        // Si es 400/403, probablemente el backend no soporta toggle
-        if (err.message && (err.message.includes('400') || err.message.includes('403') || err.message.includes('ya'))) {
-          this.showToast('No se pudo procesar el like. Intenta recargar.', 'error');
-        } else {
-          this.showToast('Error al procesar like', 'error');
-        }
+        this.showToast('Error al procesar like', 'error');
       }
     },
 
-    // ← FIX: Manejo robusto de fechas
     formatDate(dateString) {
       if (!dateString || dateString === 'null' || dateString === 'undefined') {
         return 'Fecha desconocida';
       }
 
       try {
-        // Limpiar formato /Date(...)/
         if (typeof dateString === 'string' && dateString.includes('/Date(')) {
           const match = dateString.match(/\/Date\((\d+)\)\//);
           if (match) {
@@ -254,7 +246,6 @@ document.addEventListener('alpine:init', () => {
 
         const date = new Date(dateString);
 
-        // Validar que sea fecha válida
         if (isNaN(date.getTime())) {
           console.warn('[FEED] Fecha inválida:', dateString);
           return 'Fecha inválida';
@@ -296,7 +287,7 @@ document.addEventListener('alpine:init', () => {
       } else {
         try {
           await navigator.clipboard.writeText(url);
-          this.showToast('Enlace copiado al portapapeles', 'success');
+          this.showToast('Enlace copiado al portapeles', 'success');
         } catch (err) {
           this.showToast('No se pudo copiar el enlace', 'error');
         }

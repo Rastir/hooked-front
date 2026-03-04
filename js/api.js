@@ -1,4 +1,4 @@
-// js/api.js - COMPLETO CON FIXES
+// js/api.js - COMPLETO CON VALIDACIÓN DE TOKEN EXPIRADO
 class ApiClient {
   constructor() {
     this.baseURL = CONFIG.API_BASE_URL;
@@ -7,6 +7,76 @@ class ApiClient {
 
   getToken() {
     return localStorage.getItem(CONFIG.STORAGE.TOKEN);
+  }
+
+  // NUEVO: Decodificar JWT y obtener payload
+  decodeToken(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('[API] Error decodificando token:', e);
+      return null;
+    }
+  }
+
+  // NUEVO: Verificar si el token expiró
+  isTokenExpired(token) {
+    if (!token) return true;
+    
+    const payload = this.decodeToken(token);
+    if (!payload || !payload.exp) return true;
+    
+    // exp está en segundos, Date.now() en milisegundos
+    const expirationDate = payload.exp * 1000;
+    const isExpired = Date.now() >= expirationDate;
+    
+    console.log('[API] Token expira en:', new Date(expirationDate).toLocaleString());
+    console.log('[API] Token expirado:', isExpired);
+    
+    return isExpired;
+  }
+
+  // NUEVO: Validar token antes de usarlo
+  async validateToken() {
+    const token = this.getToken();
+    
+    if (!token) {
+      console.warn('[API] No hay token');
+      return false;
+    }
+
+    if (this.isTokenExpired(token)) {
+      console.warn('[API] Token expirado, intentando refresh...');
+      const refreshed = await this.tryRefreshToken();
+      
+      if (!refreshed) {
+        console.error('[API] No se pudo refrescar token expirado');
+        this.logout();
+        window.location.href = 'index.html';
+        return false;
+      }
+      return true;
+    }
+    
+    return true;
+  }
+
+  // NUEVO: Verificar si el endpoint es de autenticación (no requiere token)
+  isAuthEndpoint(endpoint) {
+    const authEndpoints = [
+      CONFIG.ENDPOINTS.AUTH.LOGIN,
+      CONFIG.ENDPOINTS.AUTH.REGISTRO,
+      CONFIG.ENDPOINTS.AUTH.REFRESH
+    ];
+    return authEndpoints.some(authEndpoint => endpoint.includes(authEndpoint));
   }
 
   getHeaders(contentType = 'application/json') {
@@ -71,6 +141,7 @@ class ApiClient {
     }
   }
 
+  // CORREGIDO: Usar el nombre correcto del campo según tu backend
   async tryRefreshToken() {
     const refreshToken = localStorage.getItem(CONFIG.STORAGE.REFRESH_TOKEN);
     if (!refreshToken) {
@@ -87,9 +158,18 @@ class ApiClient {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem(CONFIG.STORAGE.TOKEN, data.token);
-        if (data.refreshToken) {
-          localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, data.refreshToken);
+        // CORREGIDO: Tu backend devuelve 'accessToken', no 'token'
+        const newToken = data.accessToken || data.token;
+        const newRefreshToken = data.refreshToken;
+        
+        if (!newToken) {
+          console.error('[API] No se recibió nuevo access token');
+          return false;
+        }
+        
+        localStorage.setItem(CONFIG.STORAGE.TOKEN, newToken);
+        if (newRefreshToken) {
+          localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, newRefreshToken);
         }
         console.log('[API] Token refrescado exitosamente');
         return true;
@@ -124,8 +204,18 @@ class ApiClient {
     localStorage.removeItem(CONFIG.STORAGE.USER);
   }
 
+  // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async get(endpoint) {
     console.log('[API] GET', endpoint);
+    
+    // NUEVO: No validar para endpoints de autenticación
+    if (!this.isAuthEndpoint(endpoint)) {
+      const isValid = await this.validateToken();
+      if (!isValid) {
+        throw new Error('Token inválido o expirado');
+      }
+    }
+    
     const options = {
       method: 'GET',
       headers: this.getHeaders()
@@ -134,8 +224,18 @@ class ApiClient {
     return this.handleResponse(response, options);
   }
 
+  // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async post(endpoint, data) {
     console.log('[API] POST', endpoint, data);
+    
+    // NUEVO: No validar para endpoints de autenticación
+    if (!this.isAuthEndpoint(endpoint)) {
+      const isValid = await this.validateToken();
+      if (!isValid) {
+        throw new Error('Token inválido o expirado');
+      }
+    }
+    
     const options = {
       method: 'POST',
       headers: this.getHeaders(),
@@ -145,8 +245,18 @@ class ApiClient {
     return this.handleResponse(response, options);
   }
 
+  // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async postFormData(endpoint, formData) {
     console.log('[API] POST FormData', endpoint);
+    
+    // NUEVO: No validar para endpoints de autenticación
+    if (!this.isAuthEndpoint(endpoint)) {
+      const isValid = await this.validateToken();
+      if (!isValid) {
+        throw new Error('Token inválido o expirado');
+      }
+    }
+    
     const token = this.getToken();
     const headers = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -161,8 +271,18 @@ class ApiClient {
     return this.handleResponse(response, options);
   }
 
+  // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async put(endpoint, data) {
     console.log('[API] PUT', endpoint);
+    
+    // NUEVO: No validar para endpoints de autenticación
+    if (!this.isAuthEndpoint(endpoint)) {
+      const isValid = await this.validateToken();
+      if (!isValid) {
+        throw new Error('Token inválido o expirado');
+      }
+    }
+    
     const options = {
       method: 'PUT',
       headers: this.getHeaders(),
@@ -172,8 +292,18 @@ class ApiClient {
     return this.handleResponse(response, options);
   }
 
+  // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async delete(endpoint) {
     console.log('[API] DELETE', endpoint);
+    
+    // NUEVO: No validar para endpoints de autenticación
+    if (!this.isAuthEndpoint(endpoint)) {
+      const isValid = await this.validateToken();
+      if (!isValid) {
+        throw new Error('Token inválido o expirado');
+      }
+    }
+    
     const options = {
       method: 'DELETE',
       headers: this.getHeaders()

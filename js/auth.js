@@ -137,12 +137,14 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    // CORREGIDO: Ahora guarda también el refreshToken
     handleAuthSuccess(response) {
       console.log('[AUTH] Procesando respuesta auth:', response);
       console.log('[AUTH] Keys en respuesta:', Object.keys(response));
       
       // Intentar diferentes estructuras de respuesta
       const token = response.token || response.accessToken;
+      const refreshToken = response.refreshToken; // ← NUEVO: Extraer refresh token
       let userData = response.usuario || response.user || response.usuarioDto;
       
       // Si no hay userData pero hay token, crear objeto mínimo
@@ -159,10 +161,18 @@ document.addEventListener('alpine:init', () => {
         throw new Error('Respuesta inválida: falta token');
       }
       
-      // Guardar token
+      // Guardar access token
       localStorage.setItem(CONFIG.STORAGE.TOKEN, token);
       this.token = token;
       console.log('[AUTH] Token guardado');
+      
+      // NUEVO: Guardar refresh token si existe
+      if (refreshToken) {
+        localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, refreshToken);
+        console.log('[AUTH] Refresh token guardado');
+      } else {
+        console.warn('[AUTH] No se recibió refresh token en la respuesta');
+      }
       
       // Guardar usuario
       if (userData) {
@@ -173,6 +183,7 @@ document.addEventListener('alpine:init', () => {
       
       // Verificar
       console.log('[AUTH] Verificación - Token:', !!localStorage.getItem(CONFIG.STORAGE.TOKEN));
+      console.log('[AUTH] Verificación - Refresh Token:', !!localStorage.getItem(CONFIG.STORAGE.REFRESH_TOKEN));
       console.log('[AUTH] Verificación - User:', !!localStorage.getItem(CONFIG.STORAGE.USER));
     },
 
