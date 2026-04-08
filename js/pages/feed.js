@@ -50,8 +50,8 @@ document.addEventListener('alpine:init', () => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         return {
-          id: payload.sub || payload.id,
-          email: payload.email,
+          id: payload.userId || payload.id || payload.sub,
+          email: payload.sub || payload.email,
           nombre: payload.nombre || payload.sub || 'Usuario'
         };
       } catch (e) {
@@ -65,11 +65,12 @@ document.addEventListener('alpine:init', () => {
       this.loading = true;
 
       try {
-        let endpoint = `${CONFIG.ENDPOINTS.POSTS}?page=${this.currentPage}&size=10`;
+        let endpoint = `${CONFIG.ENDPOINTS.POSTS}?page=${this.currentPage}&size=10&_t=${Date.now()}`;
         if (this.selectedCategory && this.selectedCategory !== 'todo') {
           endpoint += `&categoria=${this.selectedCategory}`;
         }
 
+        console.log('[FEED] Endpoint:', endpoint);
         const response = await api.get(endpoint);
         console.log('[FEED] Respuesta raw:', response);
 
@@ -90,15 +91,34 @@ document.addEventListener('alpine:init', () => {
           newPosts = [];
         }
 
-        newPosts = newPosts.map(post => this.mapearPostDesdeBackend(post));
-
-        if (this.currentPage === 0) {
-          this.posts = newPosts;
-        } else {
-          this.posts = [...this.posts, ...newPosts];
+        // DEBUG: Log del primer post crudo
+        if (newPosts.length > 0) {
+          console.log('[FEED] Primer post crudo del backend:', newPosts[0]);
+          console.log('[FEED] likedByCurrentUser en primer post:', newPosts[0].likedByCurrentUser);
         }
 
-        console.log('[FEED] Posts totales:', this.posts.length);
+        // MAPEO CORREGIDO: Forzar recreación completa del array para reactividad
+        const mappedPosts = newPosts.map(post => this.mapearPostDesdeBackend(post));
+
+        console.log('[FEED] Posts mapeados:', mappedPosts);
+        if (mappedPosts.length > 0) {
+          console.log('[FEED] Primer post mapeado - liked:', mappedPosts[0].liked);
+        }
+
+        // CORRECCIÓN CRÍTICA: Usar asignación reactiva correcta
+        if (this.currentPage === 0) {
+          // Forzar limpieza completa para evitar referencias viejas
+          this.posts = [];
+          await this.$nextTick();
+          this.posts = [...mappedPosts];
+        } else {
+          this.posts = [...this.posts, ...mappedPosts];
+        }
+
+        console.log('[FEED] Posts totales en array:', this.posts.length);
+        if (this.posts.length > 0) {
+          console.log('[FEED] Estado final primer post - liked:', this.posts[0].liked);
+        }
 
         if (totalPages !== null) {
           this.hasMorePosts = this.currentPage < totalPages - 1;
@@ -115,17 +135,19 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // CORREGIDO: Mapear likedByCurrentUser del backend a liked del frontend
+    // CORREGIDO: Mapeo explícito con logs de debug
     mapearPostDesdeBackend(post) {
-      return {
+      console.log('[FEED] Mapeando post ID:', post.id, '- likedByCurrentUser crudo:', post.likedByCurrentUser);
+
+      const mapped = {
         id: post.id,
         titulo: post.titulo,
         contenido: post.contenido,
         foto_link: post.fotoLink || post.foto_link || null,
         fecha_creacion: post.fechaCreacion || post.fecha_creacion || null,
         like_count: post.likeCount || post.like_count || 0,
-        // ← CORREGIDO: Mapear likedByCurrentUser del backend
-        liked: post.likedByCurrentUser !== undefined ? post.likedByCurrentUser : (post.liked || false),
+        // CRÍTICO: Usar likedByCurrentUser del backend, forzar booleano
+        liked: Boolean(post.likedByCurrentUser),
         usuario: post.autor ? {
           id: post.autor.id,
           nombre: post.autor.nombre,
@@ -135,6 +157,9 @@ document.addEventListener('alpine:init', () => {
         categoria: post.categoria || null,
         comentarios_count: post.comentariosCount || 0
       };
+
+      console.log('[FEED] Post mapeado - liked final:', mapped.liked);
+      return mapped;
     },
 
     async loadMore() {
@@ -183,50 +208,44 @@ document.addEventListener('alpine:init', () => {
       history.pushState({ category: catId }, '', url);
     },
 
-    // CORREGIDO: Toggle like con mapeo correcto de la respuesta
+    // CORREGIDO: Toggle
     async toggleLike(post) {
-      if (!post || !post.id) {
-        console.error('[FEED] Post inválido para like');
-        return;
-      }
-
-      console.log('[FEED] Toggle like en post:', post.id, 'Estado actual:', post.liked);
+      if (!post || !post.id) return;
 
       const previousLiked = post.liked;
       const previousCount = post.like_count || 0;
 
-      // Optimistic UI
+      // Optimistic UI inmediato
       post.liked = !post.liked;
-      post.like_count = post.liked ? previousCount + 1 : Math.max(0, previousCount - 1);
+      post.like_count = post.liked
+        ? previousCount + 1
+        : Math.max(0, previousCount - 1);
+      this.posts = [...this.posts];
 
       try {
-        const response = await api.post(`${CONFIG.ENDPOINTS.POSTS}/${post.id}/like`);
-        console.log('[FEED] Like response:', response);
+        const response = await api.post(
+          `${CONFIG.ENDPOINTS.POSTS}/${post.id}/like`, {}
+        );
 
-        // ← CORREGIDO: Mapear correctamente la respuesta del backend
-        if (response) {
-          // El backend devuelve likedByCurrentUser, no liked
-          if (response.likedByCurrentUser !== undefined) {
-            post.liked = response.likedByCurrentUser;
-          } else if (response.liked !== undefined) {
-            post.liked = response.liked;
-          }
-          
-          // El backend devuelve likeCount (camelCase)
-          if (response.likeCount !== undefined) {
-            post.like_count = response.likeCount;
-          } else if (response.like_count !== undefined) {
-            post.like_count = response.like_count;
+        if (response && response.likedByCurrentUser !== undefined) {
+          // ✅ Actualizar SOLO este post en el array, sin recargar nada
+          const index = this.posts.findIndex(p => p.id === post.id);
+          if (index !== -1) {
+            this.posts[index] = {
+              ...this.posts[index],
+              liked: response.likedByCurrentUser === true,
+              like_count: response.likeCount ?? post.like_count
+            };
+            // Forzar reactividad de Alpine
+            this.posts = [...this.posts];
           }
         }
 
       } catch (err) {
-        console.error('[FEED] Error en like:', err);
-
-        // Revertir cambios
+        // Revertir si falla
         post.liked = previousLiked;
         post.like_count = previousCount;
-
+        this.posts = [...this.posts];
         this.showToast('Error al procesar like', 'error');
       }
     },

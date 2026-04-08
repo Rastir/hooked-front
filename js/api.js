@@ -30,24 +30,24 @@ class ApiClient {
   // NUEVO: Verificar si el token expiró
   isTokenExpired(token) {
     if (!token) return true;
-    
+
     const payload = this.decodeToken(token);
     if (!payload || !payload.exp) return true;
-    
+
     // exp está en segundos, Date.now() en milisegundos
     const expirationDate = payload.exp * 1000;
     const isExpired = Date.now() >= expirationDate;
-    
+
     console.log('[API] Token expira en:', new Date(expirationDate).toLocaleString());
     console.log('[API] Token expirado:', isExpired);
-    
+
     return isExpired;
   }
 
   // NUEVO: Validar token antes de usarlo
   async validateToken() {
     const token = this.getToken();
-    
+
     if (!token) {
       console.warn('[API] No hay token');
       return false;
@@ -56,7 +56,7 @@ class ApiClient {
     if (this.isTokenExpired(token)) {
       console.warn('[API] Token expirado, intentando refresh...');
       const refreshed = await this.tryRefreshToken();
-      
+
       if (!refreshed) {
         console.error('[API] No se pudo refrescar token expirado');
         this.logout();
@@ -65,7 +65,7 @@ class ApiClient {
       }
       return true;
     }
-    
+
     return true;
   }
 
@@ -81,11 +81,11 @@ class ApiClient {
 
   getHeaders(contentType = 'application/json') {
     const headers = {};
-    
+
     if (contentType) {
       headers['Content-Type'] = contentType;
     }
-    
+
     const token = this.getToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -93,13 +93,13 @@ class ApiClient {
     } else {
       console.warn('[API] No hay token disponible');
     }
-    
+
     return headers;
   }
 
   async handleResponse(response, originalOptions = null) {
     console.log('[API] Respuesta HTTP:', response.status, response.statusText);
-    
+
     if (response.status === 401) {
       console.warn('[API] Recibido 401, intentando refresh token');
       const refreshed = await this.tryRefreshToken();
@@ -109,7 +109,7 @@ class ApiClient {
         window.location.href = 'index.html';
         throw new Error('401 - Sesión expirada');
       }
-      
+
       if (originalOptions) {
         console.log('[API] Token refrescado, reintentando request');
         return this.retryRequest(response.url, originalOptions);
@@ -130,13 +130,32 @@ class ApiClient {
     }
 
     if (response.status === 204) return null;
-    
+
+    // ✅ CORREGIDO: Manejar mejor el body de la respuesta
+    const contentType = response.headers.get('content-type');
+
+    // Si no hay content-type JSON, retornar null explícitamente
+    if (!contentType || !contentType.includes('application/json')) {
+      console.log('[API] Respuesta no es JSON, retornando null');
+      return null;
+    }
+
+    // ✅ CORREGIDO: Clonar response para poder leer el body y debuggear si es necesario
+    const responseClone = response.clone();
+
     try {
       const data = await response.json();
       console.log('[API] Datos recibidos:', data);
       return data;
     } catch (e) {
-      console.log('[API] Respuesta sin body JSON');
+      // Si falla el parseo, intentar leer el texto para debug
+      console.error('[API] Error parseando JSON:', e);
+      try {
+        const rawText = await responseClone.text();
+        console.log('[API] Raw response body:', rawText);
+      } catch (textError) {
+        console.log('[API] No se pudo leer el body como texto');
+      }
       return null;
     }
   }
@@ -161,12 +180,12 @@ class ApiClient {
         // CORREGIDO: Tu backend devuelve 'accessToken', no 'token'
         const newToken = data.accessToken || data.token;
         const newRefreshToken = data.refreshToken;
-        
+
         if (!newToken) {
           console.error('[API] No se recibió nuevo access token');
           return false;
         }
-        
+
         localStorage.setItem(CONFIG.STORAGE.TOKEN, newToken);
         if (newRefreshToken) {
           localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, newRefreshToken);
@@ -189,7 +208,7 @@ class ApiClient {
         'Authorization': `Bearer ${this.getToken()}`
       }
     };
-    
+
     const response = await fetch(url, newOptions);
     if (response.status === 401) {
       throw new Error('401 - Token refrescado pero sigue siendo inválido');
@@ -207,7 +226,7 @@ class ApiClient {
   // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async get(endpoint) {
     console.log('[API] GET', endpoint);
-    
+
     // NUEVO: No validar para endpoints de autenticación
     if (!this.isAuthEndpoint(endpoint)) {
       const isValid = await this.validateToken();
@@ -215,7 +234,7 @@ class ApiClient {
         throw new Error('Token inválido o expirado');
       }
     }
-    
+
     const options = {
       method: 'GET',
       headers: this.getHeaders()
@@ -224,23 +243,23 @@ class ApiClient {
     return this.handleResponse(response, options);
   }
 
-  // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
-  async post(endpoint, data) {
+  // MODIFICADO: Cambio de flujo de respuesta
+  async post(endpoint, data = null) {
     console.log('[API] POST', endpoint, data);
-    
-    // NUEVO: No validar para endpoints de autenticación
+
     if (!this.isAuthEndpoint(endpoint)) {
       const isValid = await this.validateToken();
       if (!isValid) {
         throw new Error('Token inválido o expirado');
       }
     }
-    
+
     const options = {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify(data)
+      ...(data !== null && data !== undefined && { body: JSON.stringify(data) })
     };
+
     const response = await fetch(`${this.baseURL}${endpoint}`, options);
     return this.handleResponse(response, options);
   }
@@ -248,7 +267,7 @@ class ApiClient {
   // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async postFormData(endpoint, formData) {
     console.log('[API] POST FormData', endpoint);
-    
+
     // NUEVO: No validar para endpoints de autenticación
     if (!this.isAuthEndpoint(endpoint)) {
       const isValid = await this.validateToken();
@@ -256,7 +275,7 @@ class ApiClient {
         throw new Error('Token inválido o expirado');
       }
     }
-    
+
     const token = this.getToken();
     const headers = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -266,7 +285,7 @@ class ApiClient {
       headers,
       body: formData
     };
-    
+
     const response = await fetch(`${this.baseURL}${endpoint}`, options);
     return this.handleResponse(response, options);
   }
@@ -274,7 +293,7 @@ class ApiClient {
   // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async put(endpoint, data) {
     console.log('[API] PUT', endpoint);
-    
+
     // NUEVO: No validar para endpoints de autenticación
     if (!this.isAuthEndpoint(endpoint)) {
       const isValid = await this.validateToken();
@@ -282,7 +301,7 @@ class ApiClient {
         throw new Error('Token inválido o expirado');
       }
     }
-    
+
     const options = {
       method: 'PUT',
       headers: this.getHeaders(),
@@ -295,7 +314,7 @@ class ApiClient {
   // MODIFICADO: Validar token antes de cada petición (excepto auth endpoints)
   async delete(endpoint) {
     console.log('[API] DELETE', endpoint);
-    
+
     // NUEVO: No validar para endpoints de autenticación
     if (!this.isAuthEndpoint(endpoint)) {
       const isValid = await this.validateToken();
@@ -303,7 +322,7 @@ class ApiClient {
         throw new Error('Token inválido o expirado');
       }
     }
-    
+
     const options = {
       method: 'DELETE',
       headers: this.getHeaders()
