@@ -18,27 +18,33 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/pages/feed.css">
 
-    <!-- ← FIX: Estilo para prevenir flash de contenido no inicializado -->
     <style>
         [x-cloak] {
             display: none !important;
         }
 
-        /* ← FIX: Sidebar siempre visible en desktop, user opcional */
         @media (min-width: 1024px) {
             .sidebar {
                 display: block !important;
             }
         }
 
-        /* ← FIX: Mobile nav siempre visible */
         .mobile-nav {
             display: flex !important;
+        }
+
+        /* FIX: Estilo para like activo */
+        .action-btn.active {
+            color: #ef4444;
+        }
+
+        .action-btn.active span:first-child {
+            filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.5));
         }
     </style>
 </head>
 
-<body x-data="feedApp()" x-init="init()" x-cloak>
+<body x-data="feedApp()" x-cloak>
 
     <!-- Header -->
     <header class="nav-header">
@@ -48,7 +54,6 @@
                 <span>Hooked</span>
             </a>
 
-            <!-- ← FIX: Nav links siempre visibles si hay token, no solo si hay user -->
             <nav class="nav-links" x-show="user || isInitialized">
                 <a href="feed.html" class="nav-link active">Inicio</a>
                 <a href="perfil.html" class="nav-link">Perfil</a>
@@ -59,7 +64,7 @@
 
     <div class="container layout layout-sidebar pb-safe">
 
-        <!-- Sidebar ← FIX: Siempre visible, user info condicional -->
+        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-user">
                 <div class="avatar">
@@ -74,7 +79,6 @@
             <div class="sidebar-card">
                 <div class="sidebar-title">Categorías</div>
 
-                <!-- ← FIX: @click.prevent para evitar refresh -->
                 <div class="trending-item" @click.prevent="filterByCategory('todo')">
                     <div class="trending-rank" style="background: var(--accent-ocean); color: white;">#</div>
                     <div class="trending-info">
@@ -83,7 +87,6 @@
                 </div>
 
                 <template x-for="cat in (categorias || [])" :key="cat.id">
-                    <!-- ← FIX: @click.prevent en cada categoría -->
                     <div class="trending-item" @click.prevent="filterByCategory(cat.id)">
                         <div class="trending-rank" x-text="cat.id"></div>
                         <div class="trending-info">
@@ -133,8 +136,9 @@
             </div>
 
             <!-- Posts -->
+            <!-- FIX: :key único que incluye el estado liked para forzar re-render -->
             <div class="feed-grid" x-show="!loading && posts.length > 0">
-                <template x-for="post in (posts || [])" :key="post.id || $index">
+                <template x-for="post in (posts || [])" :key="post.id">
                     <article class="post-card animate-fade-in">
 
                         <!-- Header -->
@@ -168,11 +172,11 @@
                             <p class="post-text" x-text="post.contenido || ''"></p>
                         </div>
 
-                        <!-- Acciones -->
+                        <!-- Acciones - FIX: Forzar actualización visual con x-effect -->
                         <div class="post-actions">
-                            <button class="action-btn" :class="{ 'active': post.liked }" @click="toggleLike(post)"
-                                :disabled="!post.id">
-                                <span x-text="post.liked ? '❤️' : '🤍'"></span>
+                            <button class="action-btn" :class="{ 'active': post.liked === true }"
+                                @click="toggleLike(post)" :disabled="!post.id">
+                                <span x-text="post.liked === true ? '❤️' : '🤍'"></span>
                                 <span x-text="post.like_count || 0"></span>
                             </button>
 
@@ -201,7 +205,7 @@
         </main>
     </div>
 
-    <!-- ← FIX: Mobile nav siempre visible, no condicional -->
+    <!-- Mobile nav -->
     <nav class="mobile-nav">
         <a href="feed.html" class="mobile-nav-link active">🏠<span>Inicio</span></a>
         <a href="crear-post.html" class="mobile-nav-link">➕<span>Crear</span></a>
