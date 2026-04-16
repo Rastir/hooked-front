@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perfil — Hooked</title>
+
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap"
+    rel="stylesheet" />
+
+  <!-- Estilos del proyecto -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+
+  <!-- Estilos de esta página -->
+  <link rel="stylesheet" href="css/pages/perfil.css" />
+
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ── HEADER ─────────────────────────────────────────────── -->
+  <header class="nav-header" x-data="{ menuOpen: false }">
+    <div class="nav-inner">
+      <a href="feed.html" class="nav-logo">🎣 Hooked</a>
+
+      <nav class="nav-links">
+        <a href="feed.html" class="nav-link">Feed</a>
+        <a href="perfil.html" class="nav-link active">Perfil</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="btn btn-ghost btn-sm" @click="logout()" x-data>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── PÁGINA PRINCIPAL ───────────────────────────────────── -->
+  <main class="perfil-page" x-data="perfilApp()" x-init="init()">
+
+    <!-- Estado de carga inicial -->
+    <template x-if="loading">
+      <div class="perfil-skeleton">
+        <div class="skeleton-hero"></div>
+        <div class="skeleton-info">
+          <div class="skeleton-avatar"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line w-40"></div>
+            <div class="skeleton-line w-24"></div>
+            <div class="skeleton-line w-32"></div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Error al cargar -->
+    <template x-if="!loading && error">
+      <div class="perfil-error">
+        <span class="error-icon">🎣</span>
+        <h2>No se pudo cargar el perfil</h2>
+        <p x-text="error"></p>
+        <a href="feed.html" class="btn btn-primary">Volver al feed</a>
+      </div>
+    </template>
+
+    <!-- Contenido del perfil -->
+    <template x-if="!loading && !error && usuario">
+
+      <div class="perfil-wrapper">
+
+        <!-- ── HERO / BANNER ── -->
+        <div class="perfil-hero">
+          <div class="perfil-hero-bg">
+            <div class="hero-wave"></div>
+            <div class="hero-bubbles">
+              <span></span><span></span><span></span>
+              <span></span><span></span>
+            </div>
+          </div>
+
+          <!-- Avatar + acciones -->
+          <div class="perfil-identity">
+            <div class="perfil-avatar-wrap">
+              <img
+                :src="usuario.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.nombre}&backgroundColor=0ea5e9`"
+                :alt="usuario.nombre" class="perfil-avatar" />
+              <span class="nivel-badge" :class="nivelClass(usuario.nivel)"
+                x-text="usuario.nivel || 'Principiante'"></span>
+            </div>
+
+            <!-- Botones según si es propio o ajeno -->
+            <div class="perfil-actions">
+              <template x-if="esPropioUsuario">
+                <button class="btn btn-outline" @click="abrirEdicion()">
+                  ✏️ Editar perfil
+                </button>
+              </template>
+              <template x-if="!esPropioUsuario">
+                <button class="btn btn-primary" @click="toggleSeguir()">
+                  <span x-text="siguiendo ? '✓ Siguiendo' : '+ Seguir'"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── INFO PRINCIPAL ── -->
+        <div class="perfil-container">
+          <div class="perfil-left">
+
+            <!-- Nombre y datos básicos -->
+            <div class="perfil-bio card">
+              <h1 class="perfil-nombre" x-text="usuario.nombre"></h1>
+              <div class="perfil-nivel-row">
+                <span class="nivel-inline" :class="nivelClass(usuario.nivel)"
+                  x-text="'🎣 ' + (usuario.nivel || 'Principiante')"></span>
+              </div>
+              <p class="perfil-email">📧 <span x-text="usuario.email"></span></p>
+              <p class="perfil-ubicacion">
+                📍 <span x-text="usuario.ubicacion || usuario.ubicacionPreferida || 'Sin ubicación registrada'"></span>
+              </p>
+              <p class="perfil-bio-texto" x-if="usuario.biografia" x-text="usuario.biografia"></p>
+
+              <!-- Tags / especialidades -->
+              <div class="perfil-tags" x-show="usuario.tags && usuario.tags.length">
+                <template x-for="tag in (usuario.tags || [])" :key="tag">
+                  <span class="tag-chip" x-text="'#' + tag"></span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Stats generales -->
+            <div class="perfil-stats card">
+              <h3 class="stats-titulo">📊 Estadísticas</h3>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-valor" x-text="formatNum(usuario.totalPosts || 0)"></span>
+                  <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-valor" x-text="formatNum(usuario.totalLikes || 0)"></span>
+                  <span class="stat-label">Likes recibidos</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-valor" x-text="formatNum(usuario.totalComentarios || 0)"></span>
+                  <span class="stat-label">Comentarios</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-valor" x-text="diasActivo()"></span>
+                  <span class="stat-label">Días activo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Récords de pesca -->
+            <div class="perfil-records card" x-show="records.length > 0">
+              <h3 class="stats-titulo">🏆 Récords de captura</h3>
+              <div class="records-lista">
+                <template x-for="rec in records" :key="rec.especie">
+                  <div class="record-item">
+                    <span class="record-especie" x-text="rec.especie"></span>
+                    <div class="record-datos">
+                      <span class="record-peso" x-text="rec.pesoMaximo + ' kg'" x-show="rec.pesoMaximo"></span>
+                      <span class="record-fecha" x-text="formatFecha(rec.fechaMejorCaptura)"
+                        x-show="rec.fechaMejorCaptura"></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ── COLUMNA DERECHA: Posts ── -->
+          <div class="perfil-right">
+
+            <!-- Tabs -->
+            <div class="perfil-tabs">
+              <button class="tab-btn" :class="{ active: tabActivo === 'posts' }" @click="tabActivo = 'posts'">
+                🐟 Posts
+              </button>
+              <button class="tab-btn" :class="{ active: tabActivo === 'capturas' }" @click="tabActivo = 'capturas'">
+                📸 Mejores capturas
+              </button>
+            </div>
+
+            <!-- Tab: Posts -->
+            <div x-show="tabActivo === 'posts'">
+
+              <!-- Skeleton de posts -->
+              <template x-if="loadingPosts">
+                <div class="posts-skeleton">
+                  <template x-for="i in 3" :key="i">
+                    <div class="post-skeleton-card">
+                      <div class="skeleton-line w-full"></div>
+                      <div class="skeleton-line w-3/4"></div>
+                      <div class="skeleton-img"></div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <!-- Sin posts -->
+              <template x-if="!loadingPosts && posts.length === 0">
+                <div class="empty-state">
+                  <span>🎣</span>
+                  <p
+                    x-text="esPropioUsuario ? 'Aún no has publicado nada. ¡Comparte tu primera captura!' : 'Este pescador todavía no ha publicado.'">
+                  </p>
+                  <a href="crear-post.html" class="btn btn-primary btn-sm" x-show="esPropioUsuario">
+                    Crear primer post
+                  </a>
+                </div>
+              </template>
+
+              <!-- Lista de posts -->
+              <div class="posts-lista" x-show="!loadingPosts && posts.length > 0">
+                <template x-for="post in posts" :key="post.id">
+                  <article class="post-card-perfil card">
+                    <template x-if="post.fotoLink">
+                      <div class="post-img-wrap">
+                        <img :src="post.fotoLink" :alt="post.titulo" class="post-img" loading="lazy" />
+                      </div>
+                    </template>
+                    <div class="post-body">
+                      <h4 class="post-titulo" x-text="post.titulo"></h4>
+                      <p class="post-contenido" x-text="truncar(post.contenido, 120)"></p>
+                      <div class="post-meta">
+                        <span class="post-likes">❤️ <span x-text="formatNum(post.likeCount || 0)"></span></span>
+                        <span class="post-fecha" x-text="formatFecha(post.fechaCreacion)"></span>
+                        <span class="post-categoria tag-chip" x-text="post.categoriaNombre"
+                          x-show="post.categoriaNombre"></span>
+                      </div>
+                      <div class="post-acciones">
+                        <button class="accion-btn" :class="{ 'liked': post.likedByCurrentUser }"
+                          @click="toggleLike(post)" :title="post.likedByCurrentUser ? 'Quitar like' : 'Me gusta'">
+                          <span x-text="post.likedByCurrentUser ? '❤️' : '🤍'"></span>
+                          <span x-text="formatNum(post.likeCount || 0)"></span>
+                        </button>
+                        <a :href="`post.html?id=${post.id}`" class="accion-btn" title="Comentar">
+                          💬 <span x-text="formatNum(post.totalComentarios || 0)"></span>
+                        </a>
+                        <button class="accion-btn" @click="compartir(post)" title="Compartir">
+                          🔗 Compartir
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                </template>
+
+                <!-- Cargar más -->
+                <div class="cargar-mas-wrap" x-show="hayMasPosts">
+                  <button class="btn btn-outline btn-sm" @click="cargarMasPosts()" :disabled="loadingMore">
+                    <span x-show="!loadingMore">Cargar más</span>
+                    <span x-show="loadingMore">Cargando...</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Mejores capturas -->
+            <div x-show="tabActivo === 'capturas'">
+              <template x-if="topCapturas.length === 0">
+                <div class="empty-state">
+                  <span>🐠</span>
+                  <p>Todavía no hay capturas destacadas.</p>
+                </div>
+              </template>
+
+              <div class="capturas-grid" x-show="topCapturas.length > 0">
+                <template x-for="captura in topCapturas" :key="captura.id">
+                  <div class="captura-card card">
+                    <img :src="captura.fotoLink" :alt="captura.titulo" class="captura-img" loading="lazy" />
+                    <div class="captura-info">
+                      <span class="captura-titulo" x-text="captura.titulo"></span>
+                      <span class="captura-likes">❤️ <span x-text="formatNum(captura.likeCount || 0)"></span></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ── MODAL EDITAR PERFIL ── -->
+    <div class="modal-overlay" x-show="modalEdicion" @click.self="cerrarEdicion()" x-transition>
+      <div class="modal-card card" @click.stop>
+        <div class="modal-header">
+          <h2>Editar perfil</h2>
+          <button class="btn-close" @click="cerrarEdicion()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Foto de perfil -->
+          <div class="form-group">
+            <label class="form-label">Foto de perfil</label>
+            <div class="avatar-upload-wrap">
+              <img
+                :src="editForm.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${editForm.nombre}&backgroundColor=0ea5e9`"
+                class="avatar-preview" alt="preview" />
+              <input type="file" accept="image/*" class="hidden" id="fotoInput" @change="onFotoChange($event)" />
+              <label for="fotoInput" class="btn btn-outline btn-sm">Cambiar foto</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="input-field" x-model="editForm.nombre" placeholder="Tu nombre" maxlength="80" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ubicación</label>
+            <input type="text" class="input-field" x-model="editForm.ubicacion" placeholder="Ej: Cancún, México"
+              maxlength="100" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Biografía</label>
+            <textarea class="input-field" x-model="editForm.biografia" placeholder="Cuéntanos sobre ti y tu pesca..."
+              rows="3" maxlength="300"></textarea>
+            <span class="char-count" x-text="(editForm.biografia || '').length + '/300'"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Especialidades (tags separados por coma)</label>
+            <input type="text" class="input-field" x-model="editForm.tagsRaw"
+              placeholder="trucha, mar abierto, mosca" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-ghost" @click="cerrarEdicion()">Cancelar</button>
+          <button class="btn btn-primary" @click="guardarPerfil()" :disabled="guardando">
+            <span x-show="!guardando">Guardar cambios</span>
+            <span x-show="guardando">Guardando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── MOBILE NAV ─────────────────────────────────────────── -->
+  <nav class="mobile-nav">
+    <a href="feed.html" class="mobile-nav-item">
+      <span>🏠</span>
+      <span>Feed</span>
+    </a>
+    <a href="crear-post.html" class="mobile-nav-item">
+      <span>➕</span>
+      <span>Publicar</span>
+    </a>
+    <a href="perfil.html" class="mobile-nav-item active">
+      <span>👤</span>
+      <span>Perfil</span>
+    </a>
+  </nav>
+
+  <!-- Scripts del proyecto -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/pages/perfil.js"></script>
+
+</body>
+
+</html>

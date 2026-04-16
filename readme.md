@@ -162,13 +162,23 @@ Formulario para publicar una nueva captura de pesca.
 - Botón "Publicar" en el header, deshabilitado hasta que todo es válido
  
 **Componente Alpine:** `createPost` (definido en `pages/create-post.js`)
- 
+
 ---
  
-### `perfil.html` — Perfil de Usuario *(pendiente)*
+### `perfil.html` — Perfil de Usuario 
  
-Página de perfil con estadísticas y posts del usuario. Referenciada en los links del feed pero aún no implementada.
- 
+Vista de perfil propio y ajeno. Detecta automáticamente quién es el usuario logueado mediante el JWT.
+
+- Si no hay `?id=` en la URL → carga tu propio perfil (`/api/usuarios/perfil`)
+- Si hay `?id=42` → carga el perfil de ese usuario
+- Perfil propio muestra botón "Editar perfil" con modal completo
+- Perfil ajeno muestra botón "+ Seguir"
+- Lista de posts con likes, comentarios y compartir
+- Tab "Mejores capturas" con grid de fotos ordenadas por likes
+- Récords de captura calculados desde los posts
+- Stats: total posts, likes recibidos, comentarios, días activo
+
+**Componente Alpine:** `perfilApp` (definido en `js/pages/perfil.js`)
 ---
  
 ### `post.html` — Detalle de Post *(pendiente)*
@@ -430,6 +440,7 @@ npx serve .
 | Skeletons de carga | ✅ Completo | En el feed mientras cargan posts |
 | Compartir post | ✅ Completo | Web Share API + fallback a clipboard |
 | Dark mode | ✅ Completo | Tema Deep Ocean por defecto |
+| perfil.html | ✅ Completo | Perfil propio/ajeno, edición, likes, stats |
  
 ### Pendientes 🚧
  
