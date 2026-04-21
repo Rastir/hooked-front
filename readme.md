@@ -45,8 +45,8 @@ hooked-frontend/
 ├── index.html              # Página de login / registro
 ├── feed.html               # Feed principal de posts
 ├── crear-post.html         # Formulario para crear publicación
-├── perfil.html             # Perfil de usuario (pendiente)
-├── post.html               # Detalle de post con comentarios (pendiente)
+├── perfil.html             # Perfil de usuario (propio y ajeno)
+├── post.html               # Detalle de post con comentarios anidados
 │
 ├── css/
 │   ├── variables.css       # Tokens de diseño (colores, radios, tipografía)
@@ -55,7 +55,9 @@ hooked-frontend/
 │   ├── layout.css          # Grid, sidebar, auth layout, mobile nav
 │   └── pages/
 │       ├── feed.css        # Estilos específicos del feed y posts
-│       └── create-post.css # Estilos del formulario de creación
+│       ├── create-post.css # Estilos del formulario de creación
+│       ├── perfil.css      # Estilos de la página de perfil
+│       └── post.css        # Estilos del detalle de post y comentarios
 │
 └── js/
     ├── config.js           # Configuración centralizada (URLs, endpoints, storage keys)
@@ -63,8 +65,10 @@ hooked-frontend/
     ├── auth.js             # Componente Alpine de autenticación (login/registro)
     ├── utils.js            # Utilidades compartidas (debounce, formateo, sanitización)
     └── pages/
-        ├── feed.js         # Lógica del feed (posts, likes, categorías, paginación)
-        └── create-post.js  # Lógica de creación de posts con upload a Cloudinary
+        ├── feed.js         # Lógica del feed
+        ├── create-post.js  # Lógica de creación de posts
+        ├── perfil.js       # Lógica del perfil de usuario
+        └── post.js         # Lógica del detalle de post y comentarios
 ```
  
 ---
@@ -181,10 +185,21 @@ Vista de perfil propio y ajeno. Detecta automáticamente quién es el usuario lo
 **Componente Alpine:** `perfilApp` (definido en `js/pages/perfil.js`)
 ---
  
-### `post.html` — Detalle de Post *(pendiente)*
- 
-Vista individual de un post con sus comentarios anidados. Referenciada en el botón "Comentar" del feed.
- 
+### `post.html` — Detalle de Post
+
+Vista completa de un post individual con su hilo de comentarios anidados.
+
+**Funcionalidades:**
+- Post completo con imagen, título, contenido y datos del autor
+- Toggle de likes con Optimistic UI
+- Comentarios en 2 niveles: principales y respuestas anidadas con línea conectora visual
+- Formulario de comentario nuevo con contador de caracteres y atajo Ctrl+Enter
+- Formulario de respuesta inline por cada comentario
+- Botón eliminar visible solo para comentarios propios
+- Paginación de comentarios con botón "Cargar más"
+- Skeletons de carga para post y comentarios
+
+**Componente Alpine:** `postApp` (definido en `js/pages/post.js`)
 ---
  
 ## 🎨 Sistema de Estilos
@@ -441,13 +456,13 @@ npx serve .
 | Compartir post | ✅ Completo | Web Share API + fallback a clipboard |
 | Dark mode | ✅ Completo | Tema Deep Ocean por defecto |
 | perfil.html | ✅ Completo | Perfil propio/ajeno, edición, likes, stats |
+| post.html | ✅ Completo | Detalle de post, comentarios anidados 2 niveles, likes |
+| Editar comentario propio | 🚧 En progreso | Frontend pendiente, backend listo |
  
 ### Pendientes 🚧
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
-| `perfil.html` | 🔴 Alta | Vista de perfil propio y ajeno |
-| `post.html` | 🔴 Alta | Detalle del post con comentarios |
 | Light mode toggle | 🟡 Media | Variables CSS ya definidas, falta el botón |
 | Editar / eliminar post | 🟡 Media | Solo para posts propios |
 | Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |
@@ -461,8 +476,13 @@ El frontend consume exclusivamente la [API REST de Hooked](../hooked-api). No ti
  
 | Frontend llama a | Backend responde con |
 |------------------|----------------------|
-| `POST /auth/login` | `accessToken`, `refreshToken`, datos de usuario |
 | `GET /posts?page=0&size=10` | `PaginatedResponse<PostResponse>` |
 | `GET /categorias` | `List<CategoriaResponse>` |
+| `GET /posts/{id}` | `PostResponse` con `likedByCurrentUser` correcto |
+| `GET /comentarios/post/{id}/principales` | `PaginatedResponse<ComentarioResponse>` |
+| `GET /comentarios/{id}/respuestas` | `PaginatedResponse<ComentarioResponse>` |
 | `POST /posts/{id}/like` | `{ likedByCurrentUser, likeCount }` |
+| `POST /comentarios` | `ComentarioResponse` del comentario creado |
 | `POST /posts` | `PostResponse` del post creado |
+| `POST /auth/login` | `accessToken`, `refreshToken`, datos de usuario |
+| `DELETE /comentarios/{id}` | 204 No Content |
