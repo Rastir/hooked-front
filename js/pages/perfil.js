@@ -112,7 +112,7 @@ function perfilApp() {
 
         // GET /api/usuarios/yo → devuelve el perfil del usuario logueado
         // El backend lo saca del JWT, no del id de la URL
-        const data = await api.get(`${CONFIG.ENDPOINTS.USUARIOS}/perfil`);
+        const data = await api.get(`${CONFIG.ENDPOINTS.USUARIOS}/perfil?_t=${Date.now()}`);
         this.usuario = data;
 
         // Posts propios: usamos /mis-posts que también usa el JWT
@@ -176,7 +176,7 @@ function perfilApp() {
         this.paginaActual = 0;
 
         // Este endpoint devuelve List<PostResponse> sin paginar
-        const respuesta = await api.get(`${CONFIG.ENDPOINTS.POSTS}/mis-posts`);
+        const respuesta = await api.get(`${CONFIG.ENDPOINTS.POSTS}/mis-posts?_t=${Date.now()}`);
 
         // /mis-posts devuelve un array directo, no PaginatedResponse
         this.posts = Array.isArray(respuesta) ? respuesta : [];
@@ -201,7 +201,7 @@ function perfilApp() {
 
         // GET /api/posts/usuario/{id}?pagina=0&tamano=8
         const respuesta = await api.get(
-          `${CONFIG.ENDPOINTS.POSTS}/usuario/${idUsuario}?pagina=0&tamano=${this.TAMANO_PAGINA}`
+          `${CONFIG.ENDPOINTS.POSTS}/usuario/${idUsuario}?pagina=0&tamano=${this.TAMANO_PAGINA}&_t=${Date.now()}`
         );
 
         this.posts = respuesta.contenido || respuesta.content || [];
@@ -227,7 +227,7 @@ function perfilApp() {
 
         const idUsuario = this.usuario.id;
         const respuesta = await api.get(
-          `${CONFIG.ENDPOINTS.POSTS}/usuario/${idUsuario}?pagina=${this.paginaActual}&tamano=${this.TAMANO_PAGINA}`
+          `${CONFIG.ENDPOINTS.POSTS}/usuario/${idUsuario}?pagina=${this.paginaActual}&tamano=${this.TAMANO_PAGINA}&_t=${Date.now()}`
         );
 
         const nuevos = respuesta.contenido || respuesta.content || [];
