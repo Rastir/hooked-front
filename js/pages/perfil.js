@@ -477,13 +477,9 @@ function perfilApp() {
       return nivel.toLowerCase();
     },
 
-    // Cuántos días lleva registrado el usuario
+    // Cuántos días lleva conectado el pelado
     diasActivo() {
-      if (!this.usuario?.fechaCreacion) return '—';
-      const inicio = new Date(this.usuario.fechaCreacion);
-      const hoy = new Date();
-      const dias = Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
-      return dias;
+      return this.usuario?.rachaActual || 0;
     },
 
     // Formato de número: 1200 → "1.2k"

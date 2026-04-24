@@ -1,0 +1,867 @@
+'==============================================================
+' MÓDULO PRINCIPAL - PROCESAMIENTO DE DATOS DE INNSIST
+' Reporte de Reservas y Cancelaciones
+' Versión 1.0
+'==============================================================
+
+Option Explicit
+
+' ============================================================
+' CONSTANTES
+' ============================================================
+Const HOJA_PEGAR As String = "PEGAR_AQUI"
+Const HOJA_BD As String = "BD_HISTORICA"
+Const HOJA_CONFIG As String = "CONFIG"
+Const HOJA_RPT_DIARIO As String = "RPT_DIARIO"
+Const HOJA_RPT_CN As String = "RPT_CN_AGENCIA"
+Const HOJA_RPT_ACUM As String = "RPT_ACUMULADO"
+Const HOJA_RPT_TARIFAS As String = "RPT_TARIFAS_BAJAS"
+Const TOTAL_COLUMNAS_CRUDO As Integer = 39
+Const COL_FECHA_CARGA As Integer = 40  ' AN
+Const COL_TIPO_MOV As Integer = 41     ' AO
+
+' ============================================================
+' MACRO PRINCIPAL: PROCESAR DATOS
+' ============================================================
+Sub ProcesarDatos()
+
+    Dim wsPegar As Worksheet
+    Dim wsBD As Worksheet
+    Dim wsConfig As Worksheet
+    
+    Dim ultimaFilaPegar As Long
+    Dim ultimaFilaBD As Long
+    Dim i As Long
+    Dim filaBD As Long
+    Dim statusVal As String
+    Dim registrosNuevos As Long
+    Dim registrosDescartados As Long
+    Dim fechaCarga As Date
+    
+    ' Desactivar actualizaciones para velocidad
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    Application.EnableEvents = False
+    
+    On Error GoTo ErrorHandler
+    
+    Set wsPegar = ThisWorkbook.Sheets(HOJA_PEGAR)
+    Set wsBD = ThisWorkbook.Sheets(HOJA_BD)
+    Set wsConfig = ThisWorkbook.Sheets(HOJA_CONFIG)
+    
+    ' Verificar que hay datos para procesar
+    ultimaFilaPegar = wsPegar.Cells(wsPegar.Rows.Count, "A").End(xlUp).Row
+    
+    If ultimaFilaPegar <= 1 Then
+        MsgBox "No hay datos para procesar." & vbNewLine & _
+               "Pega la información de Innsist a partir de la fila 2.", _
+               vbExclamation, "Sin datos"
+        GoTo Cleanup
+    End If
+    
+    ' Confirmar procesamiento
+    If MsgBox("Se encontraron " & (ultimaFilaPegar - 1) & " registros." & vbNewLine & _
+              "¿Deseas procesar los datos?", _
+              vbQuestion + vbYesNo, "Confirmar procesamiento") = vbNo Then
+        GoTo Cleanup
+    End If
+    
+    fechaCarga = Date
+    registrosNuevos = 0
+    registrosDescartados = 0
+    
+    ' Encontrar última fila en BD
+    ultimaFilaBD = wsBD.Cells(wsBD.Rows.Count, "A").End(xlUp).Row
+    If ultimaFilaBD = 1 And wsBD.Cells(1, 1).Value = "St" Then
+        filaBD = 2 ' Primera vez, empezar en fila 2
+    Else
+        filaBD = ultimaFilaBD + 1
+    End If
+    
+    ' Procesar cada fila
+    For i = 2 To ultimaFilaPegar
+        
+        statusVal = UCase(Trim(CStr(wsPegar.Cells(i, 1).Value)))
+        
+        ' Solo procesar RS (Reservación) y CN (Cancelación)
+        If statusVal = "RS" Or statusVal = "CN" Then
+            
+            ' Verificar que no sea duplicado (misma Cve. Reserv. + mismo Status)
+            If Not ExisteRegistro(wsBD, CStr(wsPegar.Cells(i, 3).Value), statusVal, filaBD) Then
+                
+                ' Copiar las 39 columnas
+                Dim col As Integer
+                For col = 1 To TOTAL_COLUMNAS_CRUDO
+                    wsBD.Cells(filaBD, col).Value = wsPegar.Cells(i, col).Value
+                Next col
+                
+                ' Agregar columnas extras
+                wsBD.Cells(filaBD, COL_FECHA_CARGA).Value = fechaCarga
+                
+                If statusVal = "RS" Then
+                    wsBD.Cells(filaBD, COL_TIPO_MOV).Value = "1-Reservacion"
+                ElseIf statusVal = "CN" Then
+                    wsBD.Cells(filaBD, COL_TIPO_MOV).Value = "2-Cancelacion"
+                End If
+                
+                filaBD = filaBD + 1
+                registrosNuevos = registrosNuevos + 1
+            End If
+            
+        Else
+            registrosDescartados = registrosDescartados + 1
+        End If
+        
+    Next i
+    
+    ' Actualizar fecha de último proceso en CONFIG
+    wsConfig.Range("B4").Value = fechaCarga
+    
+    ' Limpiar hoja PEGAR_AQUI (dejar encabezados)
+    If ultimaFilaPegar > 1 Then
+        wsPegar.Rows(2 & ":" & ultimaFilaPegar).Delete
+    End If
+    
+    ' Generar reportes automáticamente
+    Call GenerarReporteDiario(fechaCarga)
+    Call GenerarReporteCN_Agencia
+    Call GenerarReporteAcumulado(fechaCarga)
+    Call GenerarReporteTarifasBajas(fechaCarga)
+    
+    ' Formatear BD
+    Call FormatearBD
+    
+    MsgBox "¡Procesamiento completado!" & vbNewLine & vbNewLine & _
+           "✅ Registros nuevos agregados: " & registrosNuevos & vbNewLine & _
+           "⏭️ Registros descartados (no RS/CN): " & registrosDescartados & vbNewLine & _
+           "📅 Fecha de carga: " & Format(fechaCarga, "dd/mm/yyyy"), _
+           vbInformation, "Proceso exitoso"
+    
+    ' Ir a la hoja de reporte diario
+    ThisWorkbook.Sheets(HOJA_RPT_DIARIO).Activate
+    
+Cleanup:
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Application.EnableEvents = True
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error: " & Err.Description & vbNewLine & _
+           "En línea: " & Erl, vbCritical, "Error en procesamiento"
+    Resume Cleanup
+    
+End Sub
+
+' ============================================================
+' FUNCIÓN: Verificar si ya existe el registro (evita duplicados)
+' ============================================================
+Function ExisteRegistro(wsBD As Worksheet, cveReserva As String, status As String, limiteFilas As Long) As Boolean
+    
+    Dim i As Long
+    Dim ultimaFila As Long
+    
+    ExisteRegistro = False
+    ultimaFila = limiteFilas - 1
+    
+    If ultimaFila < 2 Then Exit Function
+    
+    For i = 2 To ultimaFila
+        If CStr(wsBD.Cells(i, 3).Value) = cveReserva And _
+           UCase(Trim(CStr(wsBD.Cells(i, 1).Value))) = status Then
+            ExisteRegistro = True
+            Exit Function
+        End If
+    Next i
+    
+End Function
+
+' ============================================================
+' REPORTE 1: REPORTE DIARIO (Reservas y Cancelaciones de ayer)
+' ============================================================
+Sub GenerarReporteDiario(fechaProceso As Date)
+
+    Dim wsBD As Worksheet
+    Dim wsRpt As Worksheet
+    Dim dictReservas As Object
+    Dim dictCancelaciones As Object
+    Dim i As Long, ultimaFila As Long
+    Dim agencia As String
+    Dim statusVal As String
+    Dim nochesVal As Double
+    Dim fila As Long
+    
+    Set wsBD = ThisWorkbook.Sheets(HOJA_BD)
+    Set wsRpt = ThisWorkbook.Sheets(HOJA_RPT_DIARIO)
+    Set dictReservas = CreateObject("Scripting.Dictionary")
+    Set dictCancelaciones = CreateObject("Scripting.Dictionary")
+    
+    ' Limpiar hoja de reporte
+    wsRpt.Cells.Clear
+    
+    ultimaFila = wsBD.Cells(wsBD.Rows.Count, "A").End(xlUp).Row
+    
+    ' Recorrer BD y filtrar por fecha de carga
+    For i = 2 To ultimaFila
+        If CDate(wsBD.Cells(i, COL_FECHA_CARGA).Value) = fechaProceso Then
+            
+            agencia = Trim(CStr(wsBD.Cells(i, 11).Value)) ' Columna K = Agencia
+            If agencia = "" Then agencia = "(SIN AGENCIA)"
+            
+            statusVal = UCase(Trim(CStr(wsBD.Cells(i, 1).Value)))
+            
+            If statusVal = "RS" Then
+                If dictReservas.Exists(agencia) Then
+                    dictReservas(agencia) = dictReservas(agencia) + 1
+                Else
+                    dictReservas.Add agencia, 1
+                End If
+            ElseIf statusVal = "CN" Then
+                If dictCancelaciones.Exists(agencia) Then
+                    dictCancelaciones(agencia) = dictCancelaciones(agencia) + 1
+                Else
+                    dictCancelaciones.Add agencia, 1
+                End If
+            End If
+        End If
+    Next i
+    
+    ' ==========================================
+    ' TABLA 1: Reservaciones generadas el día
+    ' ==========================================
+    fila = 1
+    wsRpt.Cells(fila, 1).Value = "Reservaciones generadas el día " & Format(fechaProceso, "dd/mm/yyyy")
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 1).Font.Size = 12
+    
+    fila = fila + 2
+    wsRpt.Cells(fila, 1).Value = "Agencia"
+    wsRpt.Cells(fila, 2).Value = "Reservaciones"
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 2)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 2)).Interior.Color = RGB(189, 215, 238)
+    
+    Dim key As Variant
+    Dim totalRes As Long: totalRes = 0
+    
+    ' Ordenar y escribir reservaciones
+    Dim arrKeys() As String
+    Dim arrVals() As Long
+    Dim idx As Long: idx = 0
+    
+    If dictReservas.Count > 0 Then
+        ReDim arrKeys(0 To dictReservas.Count - 1)
+        ReDim arrVals(0 To dictReservas.Count - 1)
+        
+        For Each key In dictReservas.Keys
+            arrKeys(idx) = CStr(key)
+            arrVals(idx) = dictReservas(key)
+            idx = idx + 1
+        Next key
+        
+        ' Ordenar alfabéticamente
+        Call OrdenarArrays(arrKeys, arrVals)
+        
+        For idx = 0 To UBound(arrKeys)
+            fila = fila + 1
+            wsRpt.Cells(fila, 1).Value = arrKeys(idx)
+            wsRpt.Cells(fila, 2).Value = arrVals(idx)
+            totalRes = totalRes + arrVals(idx)
+        Next idx
+    End If
+    
+    fila = fila + 1
+    wsRpt.Cells(fila, 1).Value = "Grand Total"
+    wsRpt.Cells(fila, 2).Value = totalRes
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 2).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 2)).Interior.Color = RGB(244, 176, 132)
+    
+    ' ==========================================
+    ' TABLA 2: Cancelaciones generadas el día
+    ' ==========================================
+    fila = fila + 3
+    wsRpt.Cells(fila, 1).Value = "Cancelaciones generadas el día " & Format(fechaProceso, "dd/mm/yyyy")
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 1).Font.Size = 12
+    
+    fila = fila + 2
+    wsRpt.Cells(fila, 1).Value = "Agencia"
+    wsRpt.Cells(fila, 2).Value = "Cancelaciones"
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 2)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 2)).Interior.Color = RGB(189, 215, 238)
+    
+    Dim totalCan As Long: totalCan = 0
+    idx = 0
+    
+    If dictCancelaciones.Count > 0 Then
+        ReDim arrKeys(0 To dictCancelaciones.Count - 1)
+        ReDim arrVals(0 To dictCancelaciones.Count - 1)
+        
+        For Each key In dictCancelaciones.Keys
+            arrKeys(idx) = CStr(key)
+            arrVals(idx) = dictCancelaciones(key)
+            idx = idx + 1
+        Next key
+        
+        Call OrdenarArrays(arrKeys, arrVals)
+        
+        For idx = 0 To UBound(arrKeys)
+            fila = fila + 1
+            wsRpt.Cells(fila, 1).Value = arrKeys(idx)
+            wsRpt.Cells(fila, 2).Value = arrVals(idx)
+            totalCan = totalCan + arrVals(idx)
+        Next idx
+    End If
+    
+    fila = fila + 1
+    wsRpt.Cells(fila, 1).Value = "Grand Total"
+    wsRpt.Cells(fila, 2).Value = totalCan
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 2).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 2)).Interior.Color = RGB(244, 176, 132)
+    
+    ' Autoajustar columnas
+    wsRpt.Columns("A:B").AutoFit
+    
+End Sub
+
+' ============================================================
+' REPORTE 2: CN POR AGENCIA Y MES
+' ============================================================
+Sub GenerarReporteCN_Agencia()
+
+    Dim wsBD As Worksheet
+    Dim wsRpt As Worksheet
+    Dim i As Long, ultimaFila As Long
+    Dim agencia As String, statusVal As String
+    Dim mesLlg As Integer, nochesVal As Double
+    Dim dictAgencias As Object
+    Dim dictDataRes As Object  ' key = "AGENCIA|MES" value = sum #N
+    Dim dictDataCan As Object
+    Dim fila As Long
+    
+    Set wsBD = ThisWorkbook.Sheets(HOJA_BD)
+    Set wsRpt = ThisWorkbook.Sheets(HOJA_RPT_CN)
+    Set dictAgencias = CreateObject("Scripting.Dictionary")
+    Set dictDataRes = CreateObject("Scripting.Dictionary")
+    Set dictDataCan = CreateObject("Scripting.Dictionary")
+    
+    wsRpt.Cells.Clear
+    
+    ultimaFila = wsBD.Cells(wsBD.Rows.Count, "A").End(xlUp).Row
+    
+    ' Recopilar datos
+    For i = 2 To ultimaFila
+        
+        agencia = Trim(CStr(wsBD.Cells(i, 11).Value))
+        If agencia = "" Then agencia = "(SIN AGENCIA)"
+        statusVal = UCase(Trim(CStr(wsBD.Cells(i, 1).Value)))
+        
+        ' Obtener mes de Fecha Llegada (columna 26 = Z = Fecha Llg.)
+        On Error Resume Next
+        mesLlg = Month(CDate(wsBD.Cells(i, 26).Value))
+        On Error GoTo 0
+        If mesLlg = 0 Then GoTo SiguienteFila
+        
+        ' Obtener #N (columna 22 = V)
+        nochesVal = 0
+        On Error Resume Next
+        nochesVal = CDbl(wsBD.Cells(i, 22).Value)
+        On Error GoTo 0
+        
+        ' Registrar agencia
+        If Not dictAgencias.Exists(agencia) Then
+            dictAgencias.Add agencia, agencia
+        End If
+        
+        Dim clave As String
+        clave = agencia & "|" & mesLlg
+        
+        If statusVal = "RS" Then
+            If dictDataRes.Exists(clave) Then
+                dictDataRes(clave) = dictDataRes(clave) + nochesVal
+            Else
+                dictDataRes.Add clave, nochesVal
+            End If
+        ElseIf statusVal = "CN" Then
+            If dictDataCan.Exists(clave) Then
+                dictDataCan(clave) = dictDataCan(clave) + nochesVal
+            Else
+                dictDataCan.Add clave, nochesVal
+            End If
+        End If
+        
+SiguienteFila:
+        mesLlg = 0
+    Next i
+    
+    ' ==========================================
+    ' TABLA: Reservaciones y Cancelaciones CN
+    ' ==========================================
+    Dim meses As Variant
+    meses = Array("", "enero", "febrero", "marzo", "abril", "mayo", "junio", _
+                   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+    
+    fila = 1
+    wsRpt.Cells(fila, 1).Value = "Reservaciones y Cancelaciones CN por Agencia y Mes"
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 1).Font.Size = 14
+    
+    fila = 3
+    ' Encabezado
+    wsRpt.Cells(fila, 1).Value = "Sum of #N"
+    wsRpt.Cells(fila, 2).Value = ""
+    wsRpt.Cells(fila + 1, 1).Value = "Agencia"
+    wsRpt.Cells(fila + 1, 2).Value = "Mes"
+    wsRpt.Cells(fila, 3).Value = "1-Reservaciones"
+    wsRpt.Cells(fila, 4).Value = "2-Cancelaciones"
+    wsRpt.Cells(fila, 5).Value = "Total"
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 5)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 5)).Interior.Color = RGB(189, 215, 238)
+    
+    fila = fila + 2
+    
+    ' Ordenar agencias
+    Dim arrAgencias() As String
+    Dim idxA As Long: idxA = 0
+    
+    If dictAgencias.Count > 0 Then
+        ReDim arrAgencias(0 To dictAgencias.Count - 1)
+        Dim k As Variant
+        For Each k In dictAgencias.Keys
+            arrAgencias(idxA) = CStr(k)
+            idxA = idxA + 1
+        Next k
+        Call OrdenarArraySimple(arrAgencias)
+    End If
+    
+    Dim grandTotalRes As Double: grandTotalRes = 0
+    Dim grandTotalCan As Double: grandTotalCan = 0
+    
+    Dim a As Long
+    For a = 0 To UBound(arrAgencias)
+        
+        Dim agTotalRes As Double: agTotalRes = 0
+        Dim agTotalCan As Double: agTotalCan = 0
+        Dim filaAgenciaInicio As Long: filaAgenciaInicio = fila
+        
+        ' Encabezado de agencia
+        wsRpt.Cells(fila, 1).Value = arrAgencias(a)
+        wsRpt.Cells(fila, 1).Font.Bold = True
+        wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 5)).Interior.Color = RGB(252, 228, 214)
+        
+        ' Subtotales por agencia (se llenarán después)
+        Dim filaSubtotal As Long: filaSubtotal = fila
+        fila = fila + 1
+        
+        ' Meses
+        Dim m As Integer
+        For m = 1 To 12
+            clave = arrAgencias(a) & "|" & m
+            Dim valR As Double: valR = 0
+            Dim valC As Double: valC = 0
+            
+            If dictDataRes.Exists(clave) Then valR = dictDataRes(clave)
+            If dictDataCan.Exists(clave) Then valC = dictDataCan(clave)
+            
+            If valR > 0 Or valC > 0 Then
+                wsRpt.Cells(fila, 2).Value = meses(m)
+                If valR > 0 Then wsRpt.Cells(fila, 3).Value = valR
+                If valC > 0 Then wsRpt.Cells(fila, 4).Value = valC
+                wsRpt.Cells(fila, 5).Value = valR - valC
+                
+                agTotalRes = agTotalRes + valR
+                agTotalCan = agTotalCan + valC
+                fila = fila + 1
+            End If
+        Next m
+        
+        ' Escribir subtotales de agencia
+        If agTotalRes > 0 Then wsRpt.Cells(filaSubtotal, 3).Value = agTotalRes
+        If agTotalCan > 0 Then wsRpt.Cells(filaSubtotal, 4).Value = agTotalCan
+        wsRpt.Cells(filaSubtotal, 5).Value = agTotalRes - agTotalCan
+        wsRpt.Cells(filaSubtotal, 3).Font.Bold = True
+        wsRpt.Cells(filaSubtotal, 4).Font.Bold = True
+        wsRpt.Cells(filaSubtotal, 5).Font.Bold = True
+        
+        grandTotalRes = grandTotalRes + agTotalRes
+        grandTotalCan = grandTotalCan + agTotalCan
+        
+    Next a
+    
+    ' Grand Total
+    wsRpt.Cells(fila, 1).Value = "Grand Total"
+    wsRpt.Cells(fila, 3).Value = grandTotalRes
+    wsRpt.Cells(fila, 4).Value = grandTotalCan
+    wsRpt.Cells(fila, 5).Value = grandTotalRes - grandTotalCan
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 5)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 5)).Interior.Color = RGB(244, 176, 132)
+    
+    ' ==========================================
+    ' TABLA: Reservaciones CN Agencia x Mes (desglose horizontal)
+    ' ==========================================
+    fila = fila + 4
+    wsRpt.Cells(fila, 1).Value = "Reservaciones CN por cuenta por mes"
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 1).Font.Size = 12
+    
+    fila = fila + 2
+    ' Encabezados
+    wsRpt.Cells(fila, 1).Value = "Agencia"
+    Dim colMes As Integer
+    For colMes = 1 To 12
+        wsRpt.Cells(fila, colMes + 1).Value = meses(colMes)
+    Next colMes
+    wsRpt.Cells(fila, 14).Value = "Grand Total CN"
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Interior.Color = RGB(189, 215, 238)
+    
+    fila = fila + 1
+    
+    Dim colTotales(1 To 12) As Double
+    
+    For a = 0 To UBound(arrAgencias)
+        wsRpt.Cells(fila, 1).Value = arrAgencias(a)
+        Dim totalAg As Double: totalAg = 0
+        
+        For m = 1 To 12
+            clave = arrAgencias(a) & "|" & m
+            valR = 0
+            If dictDataRes.Exists(clave) Then valR = dictDataRes(clave)
+            If valR > 0 Then
+                wsRpt.Cells(fila, m + 1).Value = valR
+                colTotales(m) = colTotales(m) + valR
+            End If
+            totalAg = totalAg + valR
+        Next m
+        
+        wsRpt.Cells(fila, 14).Value = totalAg
+        fila = fila + 1
+    Next a
+    
+    ' Totales por mes
+    wsRpt.Cells(fila, 1).Value = "Grand Total CN"
+    Dim gt As Double: gt = 0
+    For m = 1 To 12
+        If colTotales(m) > 0 Then wsRpt.Cells(fila, m + 1).Value = colTotales(m)
+        gt = gt + colTotales(m)
+    Next m
+    wsRpt.Cells(fila, 14).Value = gt
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Interior.Color = RGB(244, 176, 132)
+    
+    ' ==========================================
+    ' TABLA: Cancelaciones CN Agencia x Mes
+    ' ==========================================
+    fila = fila + 4
+    wsRpt.Cells(fila, 1).Value = "Cancelaciones CN por cuenta por mes"
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 1).Font.Size = 12
+    
+    fila = fila + 2
+    wsRpt.Cells(fila, 1).Value = "Agencia"
+    For colMes = 1 To 12
+        wsRpt.Cells(fila, colMes + 1).Value = meses(colMes)
+    Next colMes
+    wsRpt.Cells(fila, 14).Value = "Grand Total CN"
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Interior.Color = RGB(189, 215, 238)
+    
+    fila = fila + 1
+    
+    Dim colTotalesCan(1 To 12) As Double
+    
+    For a = 0 To UBound(arrAgencias)
+        wsRpt.Cells(fila, 1).Value = arrAgencias(a)
+        totalAg = 0
+        
+        For m = 1 To 12
+            clave = arrAgencias(a) & "|" & m
+            valC = 0
+            If dictDataCan.Exists(clave) Then valC = dictDataCan(clave)
+            If valC > 0 Then
+                wsRpt.Cells(fila, m + 1).Value = valC
+                colTotalesCan(m) = colTotalesCan(m) + valC
+            End If
+            totalAg = totalAg + valC
+        Next m
+        
+        wsRpt.Cells(fila, 14).Value = totalAg
+        fila = fila + 1
+    Next a
+    
+    ' Totales por mes cancelaciones
+    wsRpt.Cells(fila, 1).Value = "Grand Total CN"
+    gt = 0
+    For m = 1 To 12
+        If colTotalesCan(m) > 0 Then wsRpt.Cells(fila, m + 1).Value = colTotalesCan(m)
+        gt = gt + colTotalesCan(m)
+    Next m
+    wsRpt.Cells(fila, 14).Value = gt
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Font.Bold = True
+    wsRpt.Range(wsRpt.Cells(fila, 1), wsRpt.Cells(fila, 14)).Interior.Color = RGB(244, 176, 132)
+    
+    ' Autoajustar
+    wsRpt.Columns("A:N").AutoFit
+    
+End Sub
+
+' ============================================================
+' REPORTE 3: ACUMULADO MENSUAL
+' ============================================================
+Sub GenerarReporteAcumulado(fechaProceso As Date)
+
+    Dim wsBD As Worksheet
+    Dim wsRpt As Worksheet
+    Dim i As Long, ultimaFila As Long
+    Dim fechaCarga As Date
+    Dim nochesVal As Double
+    Dim statusVal As String
+    Dim mesActual As Integer
+    Dim anioActual As Integer
+    
+    Set wsBD = ThisWorkbook.Sheets(HOJA_BD)
+    Set wsRpt = ThisWorkbook.Sheets(HOJA_RPT_ACUM)
+    
+    mesActual = Month(fechaProceso)
+    anioActual = Year(fechaProceso)
+    
+    ' Verificar si ya existe el encabezado del mes actual
+    Dim meses As Variant
+    meses = Array("", "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", _
+                   "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE")
+    
+    ' Si la hoja está vacía, crear estructura
+    If wsRpt.Cells(1, 1).Value = "" Then
+        wsRpt.Cells(1, 1).Value = "Acumulado de reservas CN durante " & meses(mesActual) & " " & anioActual
+        wsRpt.Cells(1, 1).Font.Bold = True
+        wsRpt.Cells(1, 1).Font.Size = 14
+        
+        wsRpt.Cells(3, 1).Value = "DÍA"
+        wsRpt.Cells(3, 2).Value = "FECHA"
+        wsRpt.Cells(3, 3).Value = "OCUPACIÓN"
+        wsRpt.Cells(3, 4).Value = "RESERVAS CN"
+        wsRpt.Cells(3, 5).Value = "CANCELACIONES CN"
+        wsRpt.Cells(3, 6).Value = "TOTAL CN"
+        
+        wsRpt.Range("A3:F3").Font.Bold = True
+        wsRpt.Range("A3:F3").Interior.Color = RGB(189, 215, 238)
+        
+        ' Llenar todas las fechas del mes
+        Dim diasEnMes As Integer
+        diasEnMes = Day(DateSerial(anioActual, mesActual + 1, 0))
+        
+        Dim d As Integer
+        Dim dias As Variant
+        dias = Array("DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO")
+        
+        For d = 1 To diasEnMes
+            Dim fechaDia As Date
+            fechaDia = DateSerial(anioActual, mesActual, d)
+            
+            wsRpt.Cells(3 + d, 1).Value = dias(Weekday(fechaDia, vbSunday) - 1)
+            wsRpt.Cells(3 + d, 2).Value = fechaDia
+            wsRpt.Cells(3 + d, 2).NumberFormat = "dd-mmm"
+            wsRpt.Cells(3 + d, 3).Value = "" ' Ocupación manual
+            wsRpt.Cells(3 + d, 3).NumberFormat = "0.00%"
+            wsRpt.Cells(3 + d, 4).Value = 0
+            wsRpt.Cells(3 + d, 5).Value = 0
+            wsRpt.Cells(3 + d, 6).Formula = "=D" & (3 + d) & "-E" & (3 + d)
+            
+            ' Colorear fines de semana
+            If Weekday(fechaDia) = vbSaturday Or Weekday(fechaDia) = vbSunday Then
+                wsRpt.Range(wsRpt.Cells(3 + d, 1), wsRpt.Cells(3 + d, 6)).Interior.Color = RGB(255, 255, 200)
+                wsRpt.Cells(3 + d, 1).Font.Bold = True
+            End If
+        Next d
+        
+        ' Fila de totales
+        Dim filaTotales As Long
+        filaTotales = 3 + diasEnMes + 1
+        wsRpt.Cells(filaTotales, 2).Value = "Total CN"
+        wsRpt.Cells(filaTotales, 2).Font.Bold = True
+        wsRpt.Cells(filaTotales, 4).Formula = "=SUM(D4:D" & (3 + diasEnMes) & ")"
+        wsRpt.Cells(filaTotales, 5).Formula = "=SUM(E4:E" & (3 + diasEnMes) & ")"
+        wsRpt.Cells(filaTotales, 6).Formula = "=SUM(F4:F" & (3 + diasEnMes) & ")"
+        wsRpt.Range(wsRpt.Cells(filaTotales, 1), wsRpt.Cells(filaTotales, 6)).Interior.Color = RGB(244, 176, 132)
+        wsRpt.Range(wsRpt.Cells(filaTotales, 1), wsRpt.Cells(filaTotales, 6)).Font.Bold = True
+    End If
+    
+    ' Calcular CN del día de hoy desde BD
+    Dim totalResCN As Double: totalResCN = 0
+    Dim totalCanCN As Double: totalCanCN = 0
+    
+    ultimaFila = wsBD.Cells(wsBD.Rows.Count, "A").End(xlUp).Row
+    
+    For i = 2 To ultimaFila
+        If CDate(wsBD.Cells(i, COL_FECHA_CARGA).Value) = fechaProceso Then
+            statusVal = UCase(Trim(CStr(wsBD.Cells(i, 1).Value)))
+            nochesVal = 0
+            On Error Resume Next
+            nochesVal = CDbl(wsBD.Cells(i, 22).Value)
+            On Error GoTo 0
+            
+            If statusVal = "RS" Then
+                totalResCN = totalResCN + nochesVal
+            ElseIf statusVal = "CN" Then
+                totalCanCN = totalCanCN + nochesVal
+            End If
+        End If
+    Next i
+    
+    ' Buscar la fila del día actual y actualizar
+    Dim diasMes As Integer
+    diasMes = Day(DateSerial(anioActual, mesActual + 1, 0))
+    
+    For d = 1 To diasMes
+        If CDate(wsRpt.Cells(3 + d, 2).Value) = fechaProceso Then
+            wsRpt.Cells(3 + d, 4).Value = totalResCN
+            wsRpt.Cells(3 + d, 5).Value = totalCanCN
+            Exit For
+        End If
+    Next d
+    
+    wsRpt.Columns("A:F").AutoFit
+    
+End Sub
+
+' ============================================================
+' REPORTE 4: TARIFAS BAJAS
+' ============================================================
+Sub GenerarReporteTarifasBajas(fechaProceso As Date)
+
+    Dim wsBD As Worksheet
+    Dim wsRpt As Worksheet
+    Dim wsConfig As Worksheet
+    Dim i As Long, ultimaFila As Long
+    Dim fila As Long
+    Dim tarifaVal As Double
+    Dim umbral As Double
+    Dim statusVal As String
+    
+    Set wsBD = ThisWorkbook.Sheets(HOJA_BD)
+    Set wsRpt = ThisWorkbook.Sheets(HOJA_RPT_TARIFAS)
+    Set wsConfig = ThisWorkbook.Sheets(HOJA_CONFIG)
+    
+    umbral = CDbl(wsConfig.Range("B2").Value)
+    
+    ' Limpiar pero preservar estructura
+    wsRpt.Cells.Clear
+    
+    ' Encabezado
+    fila = 1
+    wsRpt.Cells(fila, 1).Value = "Tarifas Bajas (< $" & umbral & " DLS)"
+    wsRpt.Cells(fila, 1).Font.Bold = True
+    wsRpt.Cells(fila, 1).Font.Size = 14
+    
+    fila = 3
+    wsRpt.Cells(fila, 1).Value = "COMPAÑÍA"
+    wsRpt.Cells(fila, 2).Value = "TARIFA"
+    wsRpt.Cells(fila, 3).Value = "FECHA DE RESERVA"
+    wsRpt.Cells(fila, 4).Value = "FECHA DE LLEGADA"
+    wsRpt.Cells(fila, 5).Value = "COMENTARIOS"
+    wsRpt.Range("A3:E3").Font.Bold = True
+    wsRpt.Range("A3:E3").Interior.Color = RGB(255, 217, 102)
+    
+    fila = 4
+    ultimaFila = wsBD.Cells(wsBD.Rows.Count, "A").End(xlUp).Row
+    
+    For i = 2 To ultimaFila
+        ' Solo del día procesado y solo reservaciones
+        If CDate(wsBD.Cells(i, COL_FECHA_CARGA).Value) = fechaProceso Then
+            statusVal = UCase(Trim(CStr(wsBD.Cells(i, 1).Value)))
+            
+            If statusVal = "RS" Then
+                tarifaVal = 0
+                On Error Resume Next
+                tarifaVal = CDbl(wsBD.Cells(i, 15).Value) ' Columna O = Tarifa
+                On Error GoTo 0
+                
+                If tarifaVal < umbral Then
+                    ' Compañía/Agencia
+                    wsRpt.Cells(fila, 1).Value = Trim(CStr(wsBD.Cells(i, 11).Value))
+                    ' Tarifa
+                    wsRpt.Cells(fila, 2).Value = tarifaVal
+                    wsRpt.Cells(fila, 2).NumberFormat = "#,##0.00"
+                    ' Fecha Reserva (columna 24 = X = Fecha Res.)
+                    wsRpt.Cells(fila, 3).Value = wsBD.Cells(i, 24).Value
+                    wsRpt.Cells(fila, 3).NumberFormat = "dd/mm/yyyy"
+                    ' Fecha Llegada (columna 26 = Z = Fecha Llg.)
+                    wsRpt.Cells(fila, 4).Value = wsBD.Cells(i, 26).Value
+                    wsRpt.Cells(fila, 4).NumberFormat = "dd/mm/yyyy"
+                    ' Comentarios (vacío para llenar manual)
+                    wsRpt.Cells(fila, 5).Value = ""
+                    wsRpt.Cells(fila, 5).Interior.Color = RGB(255, 255, 200)
+                    
+                    ' Colorear tarifas muy bajas en rojo
+                    If tarifaVal < 1 Then
+                        wsRpt.Cells(fila, 2).Font.Color = RGB(255, 0, 0)
+                        wsRpt.Cells(fila, 2).Font.Bold = True
+                    End If
+                    
+                    fila = fila + 1
+                End If
+            End If
+        End If
+    Next i
+    
+    ' Ordenar por tarifa ascendente
+    If fila > 4 Then
+        wsRpt.Sort.SortFields.Clear
+        wsRpt.Sort.SortFields.Add2 Key:=wsRpt.Range("B4:B" & fila - 1), _
+            SortOn:=xlSortOnValues, Order:=xlAscending
+        With wsRpt.Sort
+            .SetRange wsRpt.Range("A3:E" & fila - 1)
+            .Header = xlYes
+            .Apply
+        End With
+    End If
+    
+    wsRpt.Columns("A:E").AutoFit
+    wsRpt.Columns("E").ColumnWidth = 40 ' Columna comentarios más ancha
+    
+End Sub
+
+' ============================================================
+' UTILIDADES
+' ============================================================
+Sub FormatearBD()
+    Dim wsBD As Worksheet
+    Set wsBD = ThisWorkbook.Sheets(HOJA_BD)
+    
+    ' Formato de fecha para columnas de fecha
+    wsBD.Columns(COL_FECHA_CARGA).NumberFormat = "dd/mm/yyyy"
+    wsBD.Columns("X").NumberFormat = "dd/mm/yyyy" ' Fecha Res
+    wsBD.Columns("Z").NumberFormat = "dd/mm/yyyy" ' Fecha Llg
+    wsBD.Columns("AA").NumberFormat = "dd/mm/yyyy" ' Fecha Sal
+    
+    wsBD.Columns("A:AO").AutoFit
+End Sub
+
+Sub OrdenarArrays(arrKeys() As String, arrVals() As Long)
+    Dim i As Long, j As Long
+    Dim tempK As String
+    Dim tempV As Long
+    
+    For i = LBound(arrKeys) To UBound(arrKeys) - 1
+        For j = i + 1 To UBound(arrKeys)
+            If arrKeys(i) > arrKeys(j) Then
+                tempK = arrKeys(i): arrKeys(i) = arrKeys(j): arrKeys(j) = tempK
+                tempV = arrVals(i): arrVals(i) = arrVals(j): arrVals(j) = tempV
+            End If
+        Next j
+    Next i
+End Sub
+
+Sub OrdenarArraySimple(arr() As String)
+    Dim i As Long, j As Long
+    Dim temp As String
+    
+    For i = LBound(arr) To UBound(arr) - 1
+        For j = i + 1 To UBound(arr)
+            If arr(i) > arr(j) Then
+                temp = arr(i): arr(i) = arr(j): arr(j) = temp
+            End If
+        Next j
+    Next i
+End Sub

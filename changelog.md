@@ -7,6 +7,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-22
+
+### Added
+- Sistema de racha de login gamificado (estilo Duolingo) — muestra días consecutivos activos
+- Sección de Badges placeholder en el perfil con 6 espacios bloqueados listos para implementación futura
+- Estadística "Racha 🔥" en el card de estadísticas del perfil
+
+### Fixed
+- Header de `perfil.html` usaba clases CSS inexistentes (`nav-inner`, `nav-logo`) — reemplazado por las mismas clases que `feed.html` y `post.html`
+- Fuente de `perfil.html` era `Space Grotesk` mientras el resto del proyecto usa `Inter` — unificado
+- Botón "Editar perfil" usaba clase `btn-outline` inexistente — cambiado a `btn-secondary`
+
+### Removed
+- Estadística de "Comentarios" eliminada del card de estadísticas del perfil — métrica reservada para cálculo interno de nivel
+- Estadística "Días activo" reemplazada por "Racha 🔥"
+
+## [0.3.1] — 2026-04-21
+
+### Added
+- Modal de edición de comentarios con textarea, contador de caracteres
+  y atajos de teclado (Ctrl+Enter guarda, Esc cancela)
+- Modal de confirmación de eliminación con mensaje de advertencia
+  de proceso irreversible, reemplazando el `confirm()` nativo del navegador
+- Botones ✏️ y 🗑️ en comentarios propios (nivel 1 y nivel 2), visibles
+  al hacer hover sobre la card del comentario
+
+### Fixed
+- `esPropio()` siempre devolvía `false` porque el localStorage guardaba
+  el usuario sin el campo `id` — corregido en `auth.js:handleAuthSuccess`
+  cosiendo el `id` desde el root del `LoginResponse` al objeto usuario
+
 ## [0.3.0] — 2026-04-20
 
 ### Added
