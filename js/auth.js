@@ -1,11 +1,11 @@
 document.addEventListener('alpine:init', () => {
-  
+
   Alpine.data('auth', () => ({
     user: null,
     token: null,
     isLoading: false,
     error: null,
-    
+
     loginForm: {
       email: '',
       password: ''
@@ -25,19 +25,19 @@ document.addEventListener('alpine:init', () => {
     checkAuth() {
       const token = localStorage.getItem(CONFIG.STORAGE.TOKEN);
       const user = localStorage.getItem(CONFIG.STORAGE.USER);
-      
+
       console.log('[AUTH] CheckAuth - Token:', token ? 'Existe' : 'No existe');
       console.log('[AUTH] CheckAuth - User raw:', user);
-      
+
       if (token && user) {
         try {
           this.token = token;
           this.user = JSON.parse(user);
           console.log('[AUTH] Usuario cargado:', this.user);
-          
+
           const currentPage = window.location.pathname.split('/').pop();
           console.log('[AUTH] Página actual:', currentPage);
-          
+
           if (currentPage === 'index.html' || currentPage === '') {
             console.log('[AUTH] Redirigiendo a feed.html');
             window.location.href = 'feed.html';
@@ -49,7 +49,7 @@ document.addEventListener('alpine:init', () => {
       } else {
         const protectedPages = ['feed.html', 'perfil.html', 'crear-post.html'];
         const currentPage = window.location.pathname.split('/').pop();
-        
+
         if (protectedPages.includes(currentPage)) {
           console.log('[AUTH] No hay sesión, redirigiendo a login');
           window.location.href = 'index.html';
@@ -70,7 +70,7 @@ document.addEventListener('alpine:init', () => {
 
         console.log('[AUTH] Respuesta login COMPLETA:', JSON.stringify(response, null, 2));
         this.handleAuthSuccess(response);
-        
+
         console.log('[AUTH] Login exitoso, redirigiendo...');
         window.location.href = 'feed.html';
       } catch (err) {
@@ -108,7 +108,7 @@ document.addEventListener('alpine:init', () => {
 
         console.log('[AUTH] Registro exitoso:', response);
         this.showToast('Registro exitoso. Iniciando sesión...', 'success');
-        
+
         // Auto-login
         await this.autoLoginAfterRegister();
       } catch (err) {
@@ -127,7 +127,7 @@ document.addEventListener('alpine:init', () => {
           email: this.registerForm.email,
           contrasena: this.registerForm.password
         });
-        
+
         console.log('[AUTH] Auto-login respuesta:', response);
         this.handleAuthSuccess(response);
         window.location.href = 'feed.html';
@@ -141,31 +141,31 @@ document.addEventListener('alpine:init', () => {
     handleAuthSuccess(response) {
       console.log('[AUTH] Procesando respuesta auth:', response);
       console.log('[AUTH] Keys en respuesta:', Object.keys(response));
-      
+
       // Intentar diferentes estructuras de respuesta
       const token = response.token || response.accessToken;
       const refreshToken = response.refreshToken; // ← NUEVO: Extraer refresh token
       let userData = response.usuario || response.user || response.usuarioDto;
-      
+
       // Si no hay userData pero hay token, crear objeto mínimo
       if (!userData && token) {
         console.warn('[AUTH] No hay usuario en respuesta, creando objeto mínimo');
-        userData = { 
+        userData = {
           email: this.loginForm.email,
           nombre: this.loginForm.email.split('@')[0] // Temporal
         };
       }
-      
+
       if (!token) {
         console.error('[AUTH] No se encontró token en respuesta');
         throw new Error('Respuesta inválida: falta token');
       }
-      
+
       // Guardar access token
       localStorage.setItem(CONFIG.STORAGE.TOKEN, token);
       this.token = token;
       console.log('[AUTH] Token guardado');
-      
+
       // NUEVO: Guardar refresh token si existe
       if (refreshToken) {
         localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, refreshToken);
@@ -173,14 +173,22 @@ document.addEventListener('alpine:init', () => {
       } else {
         console.warn('[AUTH] No se recibió refresh token en la respuesta');
       }
-      
-      // Guardar usuario
+
+      // Guardar usuario — enriquecido con id, email y nombre del root del response
       if (userData) {
-        localStorage.setItem(CONFIG.STORAGE.USER, JSON.stringify(userData));
-        this.user = userData;
-        console.log('[AUTH] Usuario guardado:', userData);
+        // El backend devuelve id, email y nombre en el root del JSON (no en un objeto usuario)
+        // así que los "cosemos" manualmente al objeto userData para no perder el id
+        const usuarioCompleto = {
+          ...userData,
+          id: userData.id || response.id,
+          email: userData.email || response.email,
+          nombre: userData.nombre || response.nombre
+        };
+        localStorage.setItem(CONFIG.STORAGE.USER, JSON.stringify(usuarioCompleto));
+        this.user = usuarioCompleto;
+        console.log('[AUTH] Usuario guardado:', usuarioCompleto);
       }
-      
+
       // Verificar
       console.log('[AUTH] Verificación - Token:', !!localStorage.getItem(CONFIG.STORAGE.TOKEN));
       console.log('[AUTH] Verificación - Refresh Token:', !!localStorage.getItem(CONFIG.STORAGE.REFRESH_TOKEN));
@@ -197,8 +205,8 @@ document.addEventListener('alpine:init', () => {
     },
 
     showToast(message, type = 'info') {
-      window.dispatchEvent(new CustomEvent('toast', { 
-        detail: { message, type } 
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message, type }
       }));
     }
   }));

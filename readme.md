@@ -196,6 +196,9 @@ Vista completa de un post individual con su hilo de comentarios anidados.
 - Formulario de comentario nuevo con contador de caracteres y atajo Ctrl+Enter
 - Formulario de respuesta inline por cada comentario
 - Botón eliminar visible solo para comentarios propios
+- Botones editar y eliminar visibles solo para comentarios propios (ambos niveles)
+- Modal de edición con textarea prellenado, contador de caracteres y atajos de teclado
+- Modal de confirmación de eliminación con advertencia de proceso irreversible
 - Paginación de comentarios con botón "Cargar más"
 - Skeletons de carga para post y comentarios
 
@@ -457,7 +460,10 @@ npx serve .
 | Dark mode | ✅ Completo | Tema Deep Ocean por defecto |
 | perfil.html | ✅ Completo | Perfil propio/ajeno, edición, likes, stats |
 | post.html | ✅ Completo | Detalle de post, comentarios anidados 2 niveles, likes |
-| Editar comentario propio | 🚧 En progreso | Frontend pendiente, backend listo |
+| Editar / eliminar comentario propio | ✅ Completo | Modal de edición y confirmación de eliminación, niveles 1 y 2 |
+| Sistema de racha 🔥 | ✅ Completo | Muestra días consecutivos de login en perfil |
+| Badges placeholder | ✅ Completo | 6 espacios visuales listos para implementación |
+| Header unificado | ✅ Completo | Todos los headers usan las mismas clases CSS |
  
 ### Pendientes 🚧
  

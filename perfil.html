@@ -9,9 +9,7 @@
   <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap"
-    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Estilos del proyecto -->
   <link rel="stylesheet" href="css/variables.css" />
@@ -24,30 +22,35 @@
 
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    [x-cloak] {
+      display: none !important;
+    }
+  </style>
 </head>
 
 <body>
 
-  <!-- ── HEADER ─────────────────────────────────────────────── -->
-  <header class="nav-header" x-data="{ menuOpen: false }">
-    <div class="nav-inner">
-      <a href="feed.html" class="nav-logo">🎣 Hooked</a>
+  <!-- ── HEADER (igual que feed.html) ──────────────────────── -->
+  <header class="nav-header">
+    <div class="container nav-container">
+      <a href="feed.html" class="logo">
+        <div class="logo-icon">🎣</div>
+        <span>Hooked</span>
+      </a>
 
       <nav class="nav-links">
-        <a href="feed.html" class="nav-link">Feed</a>
+        <a href="feed.html" class="nav-link">Inicio</a>
         <a href="perfil.html" class="nav-link active">Perfil</a>
+        <button class="btn btn-ghost btn-sm"
+          onclick="localStorage.clear(); window.location.href='index.html'">Salir</button>
       </nav>
-
-      <div class="nav-actions">
-        <button class="btn btn-ghost btn-sm" @click="logout()" x-data>
-          Cerrar sesión
-        </button>
-      </div>
     </div>
   </header>
 
   <!-- ── PÁGINA PRINCIPAL ───────────────────────────────────── -->
-  <main class="perfil-page" x-data="perfilApp()" x-init="init()">
+  <main class="perfil-page" x-data="perfilApp()" x-init="init()" x-cloak>
 
     <!-- Estado de carga inicial -->
     <template x-if="loading">
@@ -102,7 +105,7 @@
             <!-- Botones según si es propio o ajeno -->
             <div class="perfil-actions">
               <template x-if="esPropioUsuario">
-                <button class="btn btn-outline" @click="abrirEdicion()">
+                <button class="btn btn-secondary" @click="abrirEdicion()">
                   ✏️ Editar perfil
                 </button>
               </template>
@@ -115,6 +118,15 @@
           </div>
         </div>
 
+        <!-- Badges entre hero y contenido -->
+        <div class="perfil-badges-hero">
+          <template x-for="i in 6" :key="i">
+            <div class="badge-placeholder" title="Próximamente...">
+              <div class="badge-locked">🔒</div>
+            </div>
+          </template>
+        </div>
+        
         <!-- ── INFO PRINCIPAL ── -->
         <div class="perfil-container">
           <div class="perfil-left">
@@ -130,7 +142,8 @@
               <p class="perfil-ubicacion">
                 📍 <span x-text="usuario.ubicacion || usuario.ubicacionPreferida || 'Sin ubicación registrada'"></span>
               </p>
-              <p class="perfil-bio-texto" x-if="usuario.biografia" x-text="usuario.biografia"></p>
+              <p class="perfil-bio-texto" x-show="usuario.biografia || usuario.bio"
+                x-text="usuario.biografia || usuario.bio"></p>
 
               <!-- Tags / especialidades -->
               <div class="perfil-tags" x-show="usuario.tags && usuario.tags.length">
@@ -153,12 +166,8 @@
                   <span class="stat-label">Likes recibidos</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-valor" x-text="formatNum(usuario.totalComentarios || 0)"></span>
-                  <span class="stat-label">Comentarios</span>
-                </div>
-                <div class="stat-item">
                   <span class="stat-valor" x-text="diasActivo()"></span>
-                  <span class="stat-label">Días activo</span>
+                  <span class="stat-label">Racha 🔥</span>
                 </div>
               </div>
             </div>
@@ -248,8 +257,8 @@
                           <span x-text="post.likedByCurrentUser ? '❤️' : '🤍'"></span>
                           <span x-text="formatNum(post.likeCount || 0)"></span>
                         </button>
-                        <a :href="`post.html?id=${post.id}`" class="accion-btn" title="Comentar">
-                          💬 <span x-text="formatNum(post.totalComentarios || 0)"></span>
+                        <a :href="`post.html?id=${post.id}`" class="accion-btn" title="Ver comentarios">
+                          💬 <span x-text="formatNum(post.comentariosCount || post.totalComentarios || 0)"></span>
                         </a>
                         <button class="accion-btn" @click="compartir(post)" title="Compartir">
                           🔗 Compartir
@@ -261,7 +270,7 @@
 
                 <!-- Cargar más -->
                 <div class="cargar-mas-wrap" x-show="hayMasPosts">
-                  <button class="btn btn-outline btn-sm" @click="cargarMasPosts()" :disabled="loadingMore">
+                  <button class="btn btn-secondary btn-sm" @click="cargarMasPosts()" :disabled="loadingMore">
                     <span x-show="!loadingMore">Cargar más</span>
                     <span x-show="loadingMore">Cargando...</span>
                   </button>
@@ -313,7 +322,7 @@
                 :src="editForm.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${editForm.nombre}&backgroundColor=0ea5e9`"
                 class="avatar-preview" alt="preview" />
               <input type="file" accept="image/*" class="hidden" id="fotoInput" @change="onFotoChange($event)" />
-              <label for="fotoInput" class="btn btn-outline btn-sm">Cambiar foto</label>
+              <label for="fotoInput" class="btn btn-secondary btn-sm">Cambiar foto</label>
             </div>
           </div>
 
@@ -356,19 +365,18 @@
 
   <!-- ── MOBILE NAV ─────────────────────────────────────────── -->
   <nav class="mobile-nav">
-    <a href="feed.html" class="mobile-nav-item">
-      <span>🏠</span>
-      <span>Feed</span>
-    </a>
-    <a href="crear-post.html" class="mobile-nav-item">
-      <span>➕</span>
-      <span>Publicar</span>
-    </a>
-    <a href="perfil.html" class="mobile-nav-item active">
-      <span>👤</span>
-      <span>Perfil</span>
-    </a>
+    <a href="feed.html" class="mobile-nav-link">🏠<span>Inicio</span></a>
+    <a href="crear-post.html" class="mobile-nav-link">➕<span>Crear</span></a>
+    <a href="perfil.html" class="mobile-nav-link active">👤<span>Perfil</span></a>
   </nav>
+
+  <!-- ── TOASTS ─────────────────────────────────────────────── -->
+  <div class="toast-container" x-data="{ toasts: [] }"
+    @toast.window="toasts.push($event.detail); setTimeout(() => toasts.shift(), 3000)">
+    <template x-for="toast in toasts" :key="toast.message">
+      <div class="toast" :class="toast.type" x-text="toast.message"></div>
+    </template>
+  </div>
 
   <!-- Scripts del proyecto -->
   <script src="js/config.js"></script>
