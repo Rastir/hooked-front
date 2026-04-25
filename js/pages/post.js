@@ -25,7 +25,6 @@ function postApp() {
     loading: true,
     error: null,
     post: null,
-    autorFoto: null,
 
     // ── Estado de comentarios ────────────────────────────────
     loadingComentarios: false,
@@ -75,6 +74,7 @@ function postApp() {
       try {
         const raw = localStorage.getItem(CONFIG.STORAGE.USER);
         this.usuarioActual = raw ? JSON.parse(raw) : null;
+        console.log('[POST] usuarioActual cargado:', this.usuarioActual);
       } catch { this.usuarioActual = null; }
 
       const params = new URLSearchParams(window.location.search);
@@ -104,7 +104,6 @@ function postApp() {
 
         this.post = data;
         document.title = `${data.titulo} — Hooked`;
-        this.autorFoto = null;
 
         await this._cargarComentarios();
 
@@ -468,6 +467,8 @@ function postApp() {
     // ────────────────────────────────────────────────────────
     esPropio(comentario) {
       if (!this.usuarioActual || !comentario.autor) return false;
+      console.log('[PROPIO] autor.id:', comentario.autor.id, 'tipo:', typeof comentario.autor.id);
+      console.log('[PROPIO] usuarioActual.id:', this.usuarioActual.id, 'tipo:', typeof this.usuarioActual.id);
       return comentario.autor.id?.toString() === this.usuarioActual.id?.toString();
     },
 

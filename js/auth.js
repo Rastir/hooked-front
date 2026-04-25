@@ -147,12 +147,13 @@ document.addEventListener('alpine:init', () => {
       const refreshToken = response.refreshToken; // ← NUEVO: Extraer refresh token
       let userData = response.usuario || response.user || response.usuarioDto;
 
-      // Si no hay userData pero hay token, crear objeto mínimo
-      if (!userData && token) {
-        console.warn('[AUTH] No hay usuario en respuesta, creando objeto mínimo');
+      // Si no hay userData, construirlo desde los campos raíz de LoginResponse
+      if (!userData) {
         userData = {
-          email: this.loginForm.email,
-          nombre: this.loginForm.email.split('@')[0] // Temporal
+          id: response.id,
+          email: response.email || this.loginForm.email,
+          nombre: response.nombre || this.loginForm.email.split('@')[0],
+          fotoPerfil: response.fotoPerfil || null
         };
       }
 
@@ -176,17 +177,12 @@ document.addEventListener('alpine:init', () => {
 
       // Guardar usuario — enriquecido con id, email y nombre del root del response
       if (userData) {
-        // El backend devuelve id, email y nombre en el root del JSON (no en un objeto usuario)
-        // así que los "cosemos" manualmente al objeto userData para no perder el id
-        const usuarioCompleto = {
-          ...userData,
-          id: userData.id || response.id,
-          email: userData.email || response.email,
-          nombre: userData.nombre || response.nombre
-        };
-        localStorage.setItem(CONFIG.STORAGE.USER, JSON.stringify(usuarioCompleto));
-        this.user = usuarioCompleto;
-        console.log('[AUTH] Usuario guardado:', usuarioCompleto);
+        // Incluir fotoPerfil si viene en la respuesta raíz
+        if (!userData.fotoPerfil && response.fotoPerfil) {
+          userData.fotoPerfil = response.fotoPerfil;
+        }
+        localStorage.setItem(CONFIG.STORAGE.USER, JSON.stringify(userData));
+        this.user = userData;
       }
 
       // Verificar

@@ -5,7 +5,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
-## [Unreleased]
+## [Unreleased]## 
+
+[0.5.0] — 2026-04-25
+
+### Added
+- Lightbox al hacer clic en imagen del feed: imagen completa + panel lateral con
+  info del post, likes, comentarios y formulario para comentar
+- Editar y eliminar comentarios propios desde el lightbox del feed
+- Foto de perfil visible en el sidebar del feed para el usuario logueado
+
+### Fixed
+- Editar perfil: ruta del PUT corregida de `/api/usuarios/{id}` a `/api/usuarios/perfil`
+- Editar perfil: nombres de campos alineados con el backend (`bio`, `ubicacionPreferida`,
+  `nivelPescador`) — antes usaba `biografia`, `ubicacion`, `nivel`
+- Foto de perfil en modal de edición: ahora solo sube a Cloudinary si el usuario
+  seleccionó una imagen nueva, evitando llamadas innecesarias
+- Foto de perfil del autor visible en posts del feed y en post.html
+- Foto de perfil del autor visible en comentarios de post.html
+- Foto de perfil del usuario logueado guardada en localStorage al hacer login
+- Avatar del autor en post.html ahora lee `post.autor.fotoPerfil` directamente
+  en lugar de la variable separada `autorFoto` que no era reactiva
 
 ## [0.4.0] — 2026-04-22
 

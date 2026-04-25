@@ -353,8 +353,8 @@ function perfilApp() {
       // Pre-llenamos el formulario con los datos actuales
       this.editForm = {
         nombre: this.usuario.nombre || '',
-        ubicacion: this.usuario.ubicacion || '',
-        biografia: this.usuario.biografia || '',
+        ubicacion: this.usuario.ubicacionPreferida || '',
+        biografia: this.usuario.bio || '',
         fotoPerfil: this.usuario.fotoPerfil || '',
         tagsRaw: (this.usuario.tags || []).join(', '),
       };
@@ -398,20 +398,20 @@ function perfilApp() {
         }
 
         // Construimos el body para PUT /api/usuarios/{id}
+        const fotoOriginal = this.usuario.fotoPerfil || '';
         const body = {
           nombre: this.editForm.nombre,
-          ubicacion: this.editForm.ubicacion,
-          biografia: this.editForm.biografia,
-          fotoPerfil: fotoUrl,
-          // Convertir "trucha, robalo, mosca" → ["trucha","robalo","mosca"]
+          ubicacionPreferida: this.editForm.ubicacion,
+          bio: this.editForm.biografia,
           tags: this.editForm.tagsRaw
             .split(',')
             .map(t => t.trim())
             .filter(t => t.length > 0),
+          ...(fotoUrl !== fotoOriginal && fotoUrl ? { fotoPerfil: fotoUrl } : {})
         };
 
         const actualizado = await api.put(
-          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}`,
+          `${CONFIG.ENDPOINTS.USUARIOS}/perfil`,
           body
         );
 

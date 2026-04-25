@@ -464,13 +464,16 @@ npx serve .
 | Sistema de racha 🔥 | ✅ Completo | Muestra días consecutivos de login en perfil |
 | Badges placeholder | ✅ Completo | 6 espacios visuales listos para implementación |
 | Header unificado | ✅ Completo | Todos los headers usan las mismas clases CSS |
+| Foto de perfil en posts y comentarios | ✅ Completo | Autor visible en feed, post.html y lightbox |
+| Lightbox de imágenes | ✅ Completo | Desde el feed: imagen completa + panel con likes, comentarios y compartir |
+| Editar/Eliminar comentarios desde lightbox | ✅ Completo | Solo comentarios propios |
+| Editar perfil funcional | ✅ Completo | PUT corregido, campos alineados con backend, foto via Cloudinary |
  
 ### Pendientes 🚧
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
 | Light mode toggle | 🟡 Media | Variables CSS ya definidas, falta el botón |
-| Editar / eliminar post | 🟡 Media | Solo para posts propios |
 | Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |
 | Notificaciones | 🟢 Baja | Requiere WebSocket en el backend |
  
