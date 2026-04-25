@@ -68,7 +68,12 @@
         <aside class="sidebar">
             <div class="sidebar-user">
                 <div class="avatar">
-                    <span x-text="user?.nombre?.charAt(0)?.toUpperCase() || '?'"></span>
+                    <template x-if="user?.fotoPerfil">
+                        <img :src="user.fotoPerfil" :alt="user.nombre">
+                    </template>
+                    <template x-if="!user?.fotoPerfil">
+                        <span x-text="user?.nombre?.charAt(0)?.toUpperCase() || '?'"></span>
+                    </template>
                 </div>
                 <div class="sidebar-user-info">
                     <div class="sidebar-user-name" x-text="user?.nombre || 'Cargando...'"></div>
@@ -163,7 +168,8 @@
 
                         <!-- Imagen del post -->
                         <template x-if="post.foto_link">
-                            <img :src="post.foto_link" class="post-image" :alt="post.titulo || 'Imagen'" loading="lazy">
+                            <img :src="post.foto_link" class="post-image" :alt="post.titulo || 'Imagen'" loading="lazy"
+                                style="cursor: pointer;" @click="abrirLightbox(post)">
                         </template>
 
                         <!-- Contenido -->
@@ -217,6 +223,155 @@
         <template x-for="toast in toasts" :key="toast.message">
             <div class="toast" :class="toast.type" x-text="toast.message"></div>
         </template>
+    </div>
+
+    <!-- Lightbox de comentarios -->
+    <div class="lightbox-overlay" x-show="lightbox.abierto" x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0" @click.self="cerrarLightbox()" @keydown.escape.window="cerrarLightbox()"
+        x-cloak>
+        <div class="lightbox-container">
+
+            <!-- Botón cerrar -->
+            <button class="lightbox-close" @click="cerrarLightbox()">✕</button>
+
+            <!-- Imagen -->
+            <div class="lightbox-imagen">
+                <img :src="lightbox.post?.foto_link" :alt="lightbox.post?.titulo" class="lightbox-img">
+            </div>
+
+            <!-- Panel derecho -->
+            <div class="lightbox-panel">
+
+                <!-- Header autor -->
+                <div class="lightbox-autor">
+                    <div class="avatar avatar-sm">
+                        <template x-if="lightbox.post?.usuario?.foto_perfil">
+                            <img :src="lightbox.post.usuario.foto_perfil" :alt="lightbox.post.usuario.nombre">
+                        </template>
+                        <template x-if="!lightbox.post?.usuario?.foto_perfil">
+                            <span x-text="(lightbox.post?.usuario?.nombre || '?').charAt(0).toUpperCase()"></span>
+                        </template>
+                    </div>
+                    <div>
+                        <div class="lightbox-autor-nombre" x-text="lightbox.post?.usuario?.nombre"></div>
+                        <div class="lightbox-autor-fecha" x-text="formatDate(lightbox.post?.fecha_creacion)"></div>
+                    </div>
+                    <span class="post-category" x-text="lightbox.post?.categoria?.nombre"></span>
+                </div>
+
+                <!-- Contenido -->
+                <div class="lightbox-contenido">
+                    <h3 class="lightbox-titulo" x-text="lightbox.post?.titulo"></h3>
+                    <p class="lightbox-texto" x-text="lightbox.post?.contenido"></p>
+                </div>
+
+                <!-- Acciones -->
+                <div class="lightbox-acciones">
+                    <button class="action-btn" :class="{ 'active': lightbox.post?.liked }"
+                        @click="toggleLikeLightbox()">
+                        <span x-text="lightbox.post?.liked ? '❤️' : '🤍'"></span>
+                        <span x-text="lightbox.post?.like_count || 0"></span>
+                    </button>
+                    <div class="action-btn">
+                        <span>💬</span>
+                        <span x-text="(lightbox.comentarios?.length || 0) + ' comentarios'"></span>
+                    </div>
+                    <button class="action-btn" @click="sharePost(lightbox.post)">
+                        <span>🔗</span>
+                        <span>Compartir</span>
+                    </button>
+                    <a :href="'post.html?id=' + lightbox.post?.id" class="action-btn">
+                        <span>↗</span>
+                        <span>Ver post</span>
+                    </a>
+                </div>
+
+                <!-- Comentarios -->
+                <div class="lightbox-comentarios">
+
+                    <!-- Loading -->
+                    <template x-if="lightbox.loadingComentarios">
+                        <div class="lightbox-loading">Cargando comentarios...</div>
+                    </template>
+
+                    <!-- Lista -->
+                    <div class="lightbox-comentarios-lista" x-show="!lightbox.loadingComentarios">
+                        <template x-if="lightbox.comentarios.length === 0">
+                            <p class="lightbox-sin-comentarios">Sé el primero en comentar 🎣</p>
+                        </template>
+                        <template x-for="comentario in lightbox.comentarios" :key="comentario.id">
+                            <div class="lightbox-comentario">
+                                <div class="avatar avatar-xs">
+                                    <template x-if="comentario.autor?.fotoPerfil">
+                                        <img :src="comentario.autor.fotoPerfil" :alt="comentario.autor.nombre">
+                                    </template>
+                                    <template x-if="!comentario.autor?.fotoPerfil">
+                                        <span x-text="(comentario.autor?.nombre || '?').charAt(0).toUpperCase()"></span>
+                                    </template>
+                                </div>
+                                <div class="lightbox-comentario-cuerpo">
+                                    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                        <span class="lightbox-comentario-autor"
+                                            x-text="comentario.autor?.nombre"></span>
+                                        <template x-if="esPropioLightbox(comentario)">
+                                            <div style="display:flex; gap:0.25rem; margin-left:auto;">
+                                                <button class="btn-accion-comentario btn-editar"
+                                                    @click="editarComentarioLightbox(comentario)"
+                                                    title="Editar">✏️</button>
+                                                <button class="btn-accion-comentario btn-eliminar"
+                                                    @click="eliminarComentarioLightbox(comentario)"
+                                                    title="Eliminar">🗑️</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <template x-if="lightbox.comentarioEditando?.id !== comentario.id">
+                                        <p class="lightbox-comentario-texto" x-text="comentario.contenido"></p>
+                                    </template>
+                                    <template x-if="lightbox.comentarioEditando?.id === comentario.id">
+                                        <div
+                                            style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.25rem;">
+                                            <textarea class="lightbox-textarea" x-model="lightbox.textoEditando"
+                                                rows="2" maxlength="500"></textarea>
+                                            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                                                <button class="btn btn-ghost btn-sm"
+                                                    @click="cancelarEdicionLightbox()">Cancelar</button>
+                                                <button class="btn btn-primary btn-sm"
+                                                    @click="guardarEdicionLightbox()">Guardar</button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Formulario nuevo comentario -->
+                    <div class="lightbox-nuevo-comentario">
+                        <div class="avatar avatar-xs">
+                            <template x-if="user?.fotoPerfil">
+                                <img :src="user.fotoPerfil" :alt="user.nombre">
+                            </template>
+                            <template x-if="!user?.fotoPerfil">
+                                <span x-text="(user?.nombre || '?').charAt(0).toUpperCase()"></span>
+                            </template>
+                        </div>
+                        <div class="lightbox-input-wrap">
+                            <textarea class="lightbox-textarea" x-model="lightbox.nuevoComentario"
+                                placeholder="Escribe un comentario... 🎣" rows="2" maxlength="500"
+                                @keydown.ctrl.enter="enviarComentarioLightbox()"></textarea>
+                            <button class="btn btn-primary btn-sm" @click="enviarComentarioLightbox()"
+                                :disabled="!lightbox.nuevoComentario.trim() || lightbox.enviando">
+                                <span x-show="!lightbox.enviando">Comentar</span>
+                                <span x-show="lightbox.enviando">...</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/config.js"></script>

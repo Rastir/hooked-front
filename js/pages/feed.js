@@ -11,6 +11,17 @@ document.addEventListener('alpine:init', () => {
     selectedCategory: null,
     isInitialized: false,
 
+    lightbox: {
+      abierto: false,
+      post: null,
+      comentarios: [],
+      loadingComentarios: false,
+      nuevoComentario: '',
+      enviando: false,
+      comentarioEditando: null,
+      textoEditando: '',
+    },
+
     async init() {
       console.log('[FEED] Inicializando feed app');
 
@@ -138,6 +149,7 @@ document.addEventListener('alpine:init', () => {
     // CORREGIDO: Mapeo explícito con logs de debug
     mapearPostDesdeBackend(post) {
       console.log('[FEED] Mapeando post ID:', post.id, '- likedByCurrentUser crudo:', post.likedByCurrentUser);
+      console.log('[FEED] fotoPerfil del autor:', post.autor?.fotoPerfil);
 
       const mapped = {
         id: post.id,
@@ -310,6 +322,189 @@ document.addEventListener('alpine:init', () => {
         } catch (err) {
           this.showToast('No se pudo copiar el enlace', 'error');
         }
+      }
+    },
+
+    async abrirLightbox(post) {
+      // Abrimos con los datos que ya tenemos del feed
+      this.lightbox.abierto = true;
+      this.lightbox.post = post;
+      this.lightbox.comentarios = [];
+      this.lightbox.nuevoComentario = '';
+
+      // Cargamos comentarios en paralelo
+      await this._cargarComentariosLightbox(post.id);
+    },
+
+    cerrarLightbox() {
+      this.lightbox.abierto = false;
+      this.lightbox.post = null;
+      this.lightbox.comentarios = [];
+      this.lightbox.nuevoComentario = '';
+    },
+
+    async _cargarComentariosLightbox(postId) {
+      try {
+        this.lightbox.loadingComentarios = true;
+
+        const respuesta = await api.get(
+          `${CONFIG.ENDPOINTS.COMENTARIOS}/post/${postId}/principales?pagina=0&tamano=20&_t=${Date.now()}`
+        );
+
+        this.lightbox.comentarios = respuesta.contenido || respuesta.content || [];
+
+      } catch (err) {
+        console.error('[LIGHTBOX] Error cargando comentarios:', err);
+        this.lightbox.comentarios = [];
+      } finally {
+        this.lightbox.loadingComentarios = false;
+      }
+    },
+
+    async toggleLikeLightbox() {
+      const post = this.lightbox.post;
+      if (!post) return;
+
+      // Optimistic UI
+      const previousLiked = post.liked;
+      const previousCount = post.like_count || 0;
+
+      post.liked = !post.liked;
+      post.like_count = post.liked ? previousCount + 1 : Math.max(0, previousCount - 1);
+
+      try {
+        const response = await api.post(
+          `${CONFIG.ENDPOINTS.POSTS}/${post.id}/like`, {}
+        );
+
+        if (response && response.likedByCurrentUser !== undefined) {
+          post.liked = response.likedByCurrentUser === true;
+          post.like_count = response.likeCount ?? post.like_count;
+        }
+
+        // Sincronizar con el post en el feed también
+        const index = this.posts.findIndex(p => p.id === post.id);
+        if (index !== -1) {
+          this.posts[index] = {
+            ...this.posts[index],
+            liked: post.liked,
+            like_count: post.like_count
+          };
+          this.posts = [...this.posts];
+        }
+
+      } catch (err) {
+        // Revertir si falla
+        post.liked = previousLiked;
+        post.like_count = previousCount;
+        this.showToast('Error al procesar like', 'error');
+      }
+    },
+
+    async enviarComentarioLightbox() {
+      const post = this.lightbox.post;
+      if (!this.lightbox.nuevoComentario.trim() || this.lightbox.enviando || !post) return;
+
+      try {
+        this.lightbox.enviando = true;
+
+        const creado = await api.post(CONFIG.ENDPOINTS.COMENTARIOS, {
+          contenido: this.lightbox.nuevoComentario.trim(),
+          postId: post.id,
+          comentarioPadreId: null
+        });
+
+        // Agregar al inicio de la lista
+        this.lightbox.comentarios = [creado, ...this.lightbox.comentarios];
+
+        // Actualizar contador en el feed
+        const index = this.posts.findIndex(p => p.id === post.id);
+        if (index !== -1) {
+          this.posts[index] = {
+            ...this.posts[index],
+            comentarios_count: (this.posts[index].comentarios_count || 0) + 1
+          };
+          this.posts = [...this.posts];
+        }
+
+        this.lightbox.nuevoComentario = '';
+        this.showToast('Comentario publicado 💬', 'success');
+
+      } catch (err) {
+        console.error('[LIGHTBOX] Error enviando comentario:', err);
+        this.showToast(err.message || 'No se pudo publicar el comentario', 'error');
+      } finally {
+        this.lightbox.enviando = false;
+      }
+    },
+
+    esPropioLightbox(comentario) {
+      if (!this.user || !comentario.autor) return false;
+      return comentario.autor.id?.toString() === this.user.id?.toString();
+    },
+
+    editarComentarioLightbox(comentario) {
+      this.lightbox.comentarioEditando = comentario;
+      this.lightbox.textoEditando = comentario.contenido;
+    },
+
+    cancelarEdicionLightbox() {
+      this.lightbox.comentarioEditando = null;
+      this.lightbox.textoEditando = '';
+    },
+
+    async guardarEdicionLightbox() {
+      const comentario = this.lightbox.comentarioEditando;
+      if (!comentario || !this.lightbox.textoEditando.trim()) return;
+      if (this.lightbox.textoEditando.trim() === comentario.contenido) {
+        this.cancelarEdicionLightbox();
+        return;
+      }
+
+      try {
+        const actualizado = await api.put(
+          `${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}`,
+          { contenido: this.lightbox.textoEditando.trim() }
+        );
+
+        this.lightbox.comentarios = this.lightbox.comentarios.map(c =>
+          c.id === comentario.id
+            ? { ...c, contenido: actualizado.contenido }
+            : c
+        );
+
+        this.cancelarEdicionLightbox();
+        this.showToast('Comentario actualizado ✏️', 'success');
+
+      } catch (err) {
+        this.showToast('No se pudo editar el comentario', 'error');
+      }
+    },
+
+    async eliminarComentarioLightbox(comentario) {
+      if (!confirm('¿Eliminar este comentario?')) return;
+
+      try {
+        await api.delete(`${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}`);
+
+        this.lightbox.comentarios = this.lightbox.comentarios.filter(
+          c => c.id !== comentario.id
+        );
+
+        // Actualizar contador en el feed
+        const index = this.posts.findIndex(p => p.id === this.lightbox.post?.id);
+        if (index !== -1) {
+          this.posts[index] = {
+            ...this.posts[index],
+            comentarios_count: Math.max(0, (this.posts[index].comentarios_count || 1) - 1)
+          };
+          this.posts = [...this.posts];
+        }
+
+        this.showToast('Comentario eliminado', 'info');
+
+      } catch (err) {
+        this.showToast('No se pudo eliminar el comentario', 'error');
       }
     },
 

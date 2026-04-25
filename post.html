@@ -89,10 +89,10 @@
           <div class="post-detalle-header">
             <a :href="'perfil.html?id=' + post.autor.id" class="post-autor-link">
               <div class="avatar">
-                <template x-if="post.autor && post.autorFoto">
-                  <img :src="post.autorFoto" :alt="post.autor.nombre" />
+                <template x-if="post.autor && post.autor.fotoPerfil">
+                  <img :src="post.autor.fotoPerfil" :alt="post.autor.nombre" />
                 </template>
-                <template x-if="!(post.autor && post.autorFoto)">
+                <template x-if="!(post.autor && post.autor.fotoPerfil)">
                   <span x-text="(post.autor?.nombre || '?').charAt(0).toUpperCase()"></span>
                 </template>
               </div>
