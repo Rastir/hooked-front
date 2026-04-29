@@ -37,6 +37,10 @@
       <nav class="nav-links">
         <a href="feed.html" class="nav-link">Inicio</a>
         <a href="perfil.html" class="nav-link">Perfil</a>
+        <button class="theme-toggle" onclick="Utils.toggleTheme(); this.textContent = Utils.getThemeIcon()"
+          title="Cambiar tema">
+          ☀️
+        </button>
         <button class="btn btn-ghost btn-sm" @click="logout()">Salir</button>
       </nav>
     </div>
@@ -409,6 +413,7 @@
   <script src="js/auth.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/pages/post.js"></script>
+  <script>Utils.initTheme(); document.querySelector('.theme-toggle').textContent = Utils.getThemeIcon();</script>
 
 </body>
 
