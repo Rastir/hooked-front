@@ -39,6 +39,18 @@ function perfilApp() {
     // ── Modal edición ───────────────────────────────────────
     modalEdicion: false,
     guardando: false,
+    modalEdicionPost: false,
+    guardandoPost: false,
+    postEnEdicion: null,
+    categorias: [],
+    editPostForm: {
+      titulo: '',
+      contenido: '',
+      categoriaId: '',
+      imagenPreview: null,
+      fotoLink: '',
+    },
+    _archivoFotoPost: null,
     editForm: {
       nombre: '',
       ubicacion: '',
@@ -65,6 +77,8 @@ function perfilApp() {
 
       // 3. Obtener el usuario logueado desde localStorage
       const usuarioLogueado = this._getUsuarioLogueado();
+
+      await this._cargarCategorias();
 
       if (!usuarioLogueado) {
         this.error = 'No se encontró sesión activa.';
@@ -241,6 +255,142 @@ function perfilApp() {
       }
     },
 
+    // ── CARGAR CATEGORÍAS ──
+    async _cargarCategorias() {
+      try {
+        this.categorias = await api.get(CONFIG.ENDPOINTS.CATEGORIAS) || [];
+      } catch (err) {
+        console.error('Error cargando categorías:', err);
+      }
+    },
+
+    // ── ABRIR MODAL EDICIÓN POST ──
+    // Es como abrir un cajón con los datos actuales ya cargados
+    abrirEdicionPost(post) {
+      this.postEnEdicion = post;
+      this.editPostForm = {
+        titulo: post.titulo || '',
+        contenido: post.contenido || '',
+        categoriaId: post.categoria?.id || '',
+        imagenPreview: post.fotoLink || null,
+        fotoLink: post.fotoLink || '',
+      };
+      this._archivoFotoPost = null;
+      this.modalEdicionPost = true;
+    },
+
+    cerrarEdicionPost() {
+      this.modalEdicionPost = false;
+      this.postEnEdicion = null;
+      this._archivoFotoPost = null;
+    },
+
+    // Preview de imagen nueva antes de subir
+    onEditPostFotoChange(event) {
+      const archivo = event.target.files[0];
+      if (!archivo) return;
+      if (archivo.size > 5 * 1024 * 1024) {
+        this._toast('La imagen no puede pesar más de 5MB', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => { this.editPostForm.imagenPreview = e.target.result; };
+      reader.readAsDataURL(archivo);
+      this._archivoFotoPost = archivo;
+    },
+
+    // ── GUARDAR EDICIÓN POST ──
+    async guardarEdicionPost() {
+      if (this.guardandoPost || !this.postEnEdicion) return;
+      if (!this.editPostForm.titulo.trim()) {
+        this._toast('El título es obligatorio', 'error');
+        return;
+      }
+      if (!this.editPostForm.categoriaId) {
+        this._toast('Selecciona una categoría', 'error');
+        return;
+      }
+
+      const ok = await Utils.confirm({
+        icono: '✏️',
+        titulo: '¿Guardar cambios?',
+        mensaje: 'Se actualizará la información de este post.',
+        btnOk: 'Guardar',
+        btnCancel: 'Cancelar',
+      });
+      if (!ok) return;
+
+      try {
+        this.guardandoPost = true;
+
+        // Si hay imagen nueva, subirla primero a Cloudinary
+        let fotoLink = this.editPostForm.fotoLink;
+        if (this._archivoFotoPost) {
+          fotoLink = await this._subirFotoCloudinary(this._archivoFotoPost);
+          this._archivoFotoPost = null;
+        }
+
+        const body = {
+          titulo: this.editPostForm.titulo.trim(),
+          contenido: this.editPostForm.contenido.trim(),
+          categoriaId: parseInt(this.editPostForm.categoriaId),
+          fotoLink: fotoLink || null,
+        };
+
+        const actualizado = await api.put(
+          `${CONFIG.ENDPOINTS.POSTS}/${this.postEnEdicion.id}`,
+          body
+        );
+
+        // Actualizar el post en el array local sin recargar todo
+        const idx = this.posts.findIndex(p => p.id === this.postEnEdicion.id);
+        if (idx !== -1) {
+          this.posts[idx] = { ...this.posts[idx], ...actualizado };
+        }
+
+        this.cerrarEdicionPost();
+        this._toast('Post actualizado ✅', 'success');
+
+      } catch (err) {
+        console.error('Error guardando post:', err);
+        this._toast(err.message || 'No se pudo guardar el post', 'error');
+      } finally {
+        this.guardandoPost = false;
+      }
+    },
+
+    // ── ELIMINAR POST ──
+    // El confirm() es como preguntarle al usuario "¿estás seguro?"
+    // antes de tirar algo a la basura
+    async confirmarEliminarPost(post) {
+      const ok = await Utils.confirm({
+        icono: '🗑️',
+        titulo: '¿Eliminar este post?',
+        mensaje: `"${post.titulo}" se eliminará permanentemente.`,
+        btnOk: 'Sí, eliminar',
+        btnCancel: 'Cancelar',
+        peligro: true,
+      });
+      if (!ok) return;
+
+      try {
+        await api.delete(`${CONFIG.ENDPOINTS.POSTS}/${post.id}`);
+
+        // Quitar del array local
+        this.posts = this.posts.filter(p => p.id !== post.id);
+
+        // Actualizar contador de stats
+        if (this.usuario && this.usuario.totalPosts > 0) {
+          this.usuario.totalPosts--;
+        }
+
+        this._toast('Post eliminado 🗑️', 'info');
+
+      } catch (err) {
+        console.error('Error eliminando post:', err);
+        this._toast(err.message || 'No se pudo eliminar el post', 'error');
+      }
+    },
     // ────────────────────────────────────────────────────────
     // CALCULAR TOP CAPTURAS
     // Son los posts que tienen foto, ordenados por likeCount

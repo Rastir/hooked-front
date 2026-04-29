@@ -383,16 +383,22 @@ function postApp() {
       }, 200);
     },
 
-    async eliminarComentario() {
-      if (!this.comentarioAEliminar || this.eliminando) return;
+    async eliminarComentario(comentario) {
+      const ok = await Utils.confirm({
+        icono: '🗑️',
+        titulo: '¿Eliminar comentario?',
+        mensaje: 'Esta acción no se puede deshacer.',
+        btnOk: 'Eliminar',
+        btnCancel: 'Cancelar',
+        peligro: true,
+      });
+      if (!ok) return;
 
       try {
-        this.eliminando = true;
-        const comentario = this.comentarioAEliminar;
-
         await api.delete(`${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}`);
 
         if (comentario.comentarioPadreId) {
+          // Es una respuesta: quitarla del array de su padre
           const idxPadre = this.comentariosArbol.findIndex(
             c => c.id === comentario.comentarioPadreId
           );
@@ -405,20 +411,16 @@ function postApp() {
             };
           }
         } else {
-          this.comentariosArbol = this.comentariosArbol.filter(
-            c => c.id !== comentario.id
-          );
+          // Es comentario principal: quitarlo del árbol
+          this.comentariosArbol = this.comentariosArbol.filter(c => c.id !== comentario.id);
         }
 
         this.totalComentarios = Math.max(0, this.totalComentarios - 1);
-        this.cerrarEliminar();
         this._toast('Comentario eliminado', 'info');
 
       } catch (err) {
         console.error('[POST] Error eliminando comentario:', err);
         this._toast(err.message || 'No se pudo eliminar el comentario', 'error');
-      } finally {
-        this.eliminando = false;
       }
     },
 

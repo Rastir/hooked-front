@@ -43,6 +43,10 @@
       <nav class="nav-links">
         <a href="feed.html" class="nav-link">Inicio</a>
         <a href="perfil.html" class="nav-link active">Perfil</a>
+        <button class="theme-toggle" onclick="Utils.toggleTheme(); this.textContent = Utils.getThemeIcon()"
+          title="Cambiar tema">
+          ☀️
+        </button>
         <button class="btn btn-ghost btn-sm"
           onclick="localStorage.clear(); window.location.href='index.html'">Salir</button>
       </nav>
@@ -263,6 +267,17 @@
                         <button class="accion-btn" @click="compartir(post)" title="Compartir">
                           🔗 Compartir
                         </button>
+                        <template x-if="esPropioUsuario">
+                          <button class="accion-btn" @click="abrirEdicionPost(post)" title="Editar post">
+                            ✏️ Editar
+                          </button>
+                        </template>
+                        <template x-if="esPropioUsuario">
+                          <button class="accion-btn accion-btn--danger" @click="confirmarEliminarPost(post)"
+                            title="Eliminar post">
+                            🗑️ Eliminar
+                          </button>
+                        </template>
                       </div>
                     </div>
                   </article>
@@ -361,6 +376,65 @@
       </div>
     </div>
 
+    <!-- ── MODAL EDITAR POST ── -->
+    <div class="modal-overlay" x-show="modalEdicionPost" @click.self="cerrarEdicionPost()" x-transition>
+      <div class="modal-card card" @click.stop>
+        <div class="modal-header">
+          <h2>Editar post</h2>
+          <button class="btn-close" @click="cerrarEdicionPost()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Imagen actual -->
+          <div class="form-group">
+            <label class="form-label">Imagen</label>
+            <div class="image-upload-perfil" :class="{ 'has-image': editPostForm.imagenPreview }">
+              <img x-show="editPostForm.imagenPreview" :src="editPostForm.imagenPreview" class="image-preview-perfil" />
+              <div x-show="!editPostForm.imagenPreview" class="upload-placeholder-sm">
+                📷 Sin imagen
+              </div>
+              <input type="file" accept="image/*" class="hidden" id="editPostFotoInput"
+                @change="onEditPostFotoChange($event)" />
+              <label for="editPostFotoInput" class="btn btn-secondary btn-sm" style="margin-top: 8px;">
+                Cambiar imagen
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Título</label>
+            <input type="text" class="input-field" x-model="editPostForm.titulo" placeholder="Título del post"
+              maxlength="200" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <textarea class="input-field" x-model="editPostForm.contenido" placeholder="Descripción..." rows="4"
+              maxlength="5000"></textarea>
+            <span class="char-count" x-text="(editPostForm.contenido || '').length + '/5000'"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Categoría</label>
+            <select class="input-field" x-model="editPostForm.categoriaId">
+              <option value="">Selecciona categoría</option>
+              <template x-for="cat in categorias" :key="cat.id">
+                <option :value="cat.id" x-text="cat.nombre"></option>
+              </template>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-ghost" @click="cerrarEdicionPost()">Cancelar</button>
+          <button class="btn btn-primary" @click="guardarEdicionPost()" :disabled="guardandoPost">
+            <span x-show="!guardandoPost">Guardar cambios</span>
+            <span x-show="guardandoPost">Guardando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- ── MOBILE NAV ─────────────────────────────────────────── -->
@@ -385,6 +459,7 @@
   <script src="js/utils.js"></script>
   <script src="js/pages/perfil.js"></script>
 
+  <script>Utils.initTheme(); document.querySelector('.theme-toggle').textContent = Utils.getThemeIcon();</script>
 </body>
 
 </html>
