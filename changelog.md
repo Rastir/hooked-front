@@ -7,6 +7,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+## [0.6.0] — 2026-04-29
+
+### Added
+- Light mode toggle en el header de todas las páginas
+- `Utils.initTheme()` y `Utils.toggleTheme()` en `utils.js`
+- `Utils.confirm()` — modal de confirmación reutilizable que reemplaza
+  el `confirm()` nativo del navegador, siguiendo el tema de Hooked
+- Editar posts propios desde `perfil.html` — modal con título,
+  descripción, categoría e imagen
+- Eliminar posts propios desde `perfil.html` con confirmación
+- Confirmación visual antes de guardar cambios en edición de post
+- Estilos `.confirm-overlay` y `.confirm-card` en `components.css`
+- Estilos `.image-upload-perfil` y `.accion-btn--danger` en `perfil.css`
+
+### Changed
+- `confirmarEliminarPost()` en `perfil.js` ahora usa `Utils.confirm()`
+- `eliminarComentario()` en `post.js` ahora usa `Utils.confirm()`
+- Preferencia de tema guardada en `localStorage` como `hooked_theme`
+
 [0.5.0] — 2026-04-25
 
 ### Added

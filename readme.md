@@ -480,7 +480,6 @@ npx serve .
 | Light mode — paleta     | 🟡 Media | Textos y fondos pierden contraste en fondo blanco |
 | Editar comentario       | 🟡 Media | HTML preparado, falta abrirEdicion() en post.js |
 | Sistema seguir usuarios | 🟡 Media | Back + front desde cero |
-| Light mode toggle | 🟡 Media | Variables CSS ya definidas, falta el botón |
 | Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |
 | Notificaciones | 🟢 Baja | Requiere WebSocket en el backend |
  
