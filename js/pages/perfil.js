@@ -391,6 +391,7 @@ function perfilApp() {
         this._toast(err.message || 'No se pudo eliminar el post', 'error');
       }
     },
+    
     // ────────────────────────────────────────────────────────
     // CALCULAR TOP CAPTURAS
     // Son los posts que tienen foto, ordenados por likeCount

@@ -7,6 +7,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+## [0.7.0] — 2026-05-05
+
+### Added
+- Light mode funcional con paleta "Amanecer en el muelle"
+  (fondo azul pizarra #1e3a5f + cards arena #f5efe6)
+- Toggle de tema persistente en el header
+
+### Fixed
+- `perfil.css` — reemplazados colores hardcodeados por variables CSS
+  para respetar el light mode
+- `post.css` — mismo fix, comentarios y skeletons ahora usan variables
+- `create-post.css` — formulario y upload adaptan correctamente al tema
+- Textos y cards que se perdían en light mode por herencia de colores
+  del dark mode
+
 ## [0.6.0] — 2026-04-29
 
 ### Added
