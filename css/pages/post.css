@@ -2,7 +2,7 @@
    post.css — Página de detalle de post con comentarios
    Tema: Deep Ocean (consistente con el resto del proyecto)
    ═══════════════════════════════════════════════════════════ */
- 
+
 /* ── Layout base ─────────────────────────────────────────── */
 .post-page {
   padding-top: calc(var(--header-height) + 1.5rem);
@@ -10,7 +10,7 @@
   max-width: 720px;
   margin: 0 auto;
 }
- 
+
 /* ── Botón volver ─────────────────────────────────────────── */
 .btn-volver {
   display: inline-flex;
@@ -25,19 +25,19 @@
   border-radius: var(--radius-md);
   transition: color var(--transition-fast), background var(--transition-fast);
 }
- 
+
 .btn-volver:hover {
   color: var(--accent-ocean);
   background: var(--bg-tertiary);
 }
- 
+
 /* ── Card del post ───────────────────────────────────────── */
 .post-detalle {
   margin-bottom: 1.5rem;
   overflow: hidden;
   padding: 0;
 }
- 
+
 .post-detalle-header {
   display: flex;
   align-items: center;
@@ -45,7 +45,7 @@
   padding: 1.25rem 1.25rem 1rem;
   border-bottom: 1px solid var(--border-color);
 }
- 
+
 .post-autor-link {
   display: flex;
   align-items: center;
@@ -54,18 +54,18 @@
   flex: 1;
   min-width: 0;
 }
- 
+
 .post-autor-link:hover .post-autor-nombre {
   color: var(--accent-ocean);
 }
- 
+
 .post-autor-info {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
 }
- 
+
 .post-autor-nombre {
   font-weight: 600;
   font-size: 0.9rem;
@@ -75,12 +75,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
- 
+
 .post-autor-fecha {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
- 
+
 .post-categoria-badge {
   display: inline-flex;
   align-items: center;
@@ -94,25 +94,25 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
- 
+
 .post-detalle-img-wrap {
   width: 100%;
   max-height: 480px;
   overflow: hidden;
   background: var(--bg-tertiary);
 }
- 
+
 .post-detalle-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
- 
+
 .post-detalle-body {
   padding: 1.25rem 1.25rem 1rem;
 }
- 
+
 .post-detalle-titulo {
   font-size: 1.375rem;
   font-weight: 700;
@@ -120,7 +120,7 @@
   line-height: 1.35;
   margin: 0 0 0.75rem;
 }
- 
+
 .post-detalle-contenido {
   font-size: 0.95rem;
   color: var(--text-secondary);
@@ -128,7 +128,7 @@
   margin: 0;
   white-space: pre-wrap;
 }
- 
+
 .post-detalle-acciones {
   display: flex;
   align-items: center;
@@ -138,7 +138,7 @@
   background: var(--bg-tertiary);
   flex-wrap: wrap;
 }
- 
+
 .accion-btn {
   display: inline-flex;
   align-items: center;
@@ -155,19 +155,19 @@
     border-color var(--transition-fast);
   font-weight: 500;
 }
- 
+
 .accion-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
   border-color: rgba(255, 255, 255, 0.15);
 }
- 
+
 .accion-btn.liked {
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.3);
   background: rgba(239, 68, 68, 0.08);
 }
- 
+
 .accion-info {
   display: inline-flex;
   align-items: center;
@@ -176,14 +176,14 @@
   font-size: 0.8rem;
   padding: 0.4rem 0.5rem;
 }
- 
+
 /* ── Sección comentarios ─────────────────────────────────── */
 .comentarios-seccion {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
- 
+
 .comentarios-titulo {
   font-size: 1.1rem;
   font-weight: 700;
@@ -193,13 +193,13 @@
   align-items: center;
   gap: 0.5rem;
 }
- 
+
 .comentarios-count {
   font-size: 0.875rem;
   color: var(--text-muted);
   font-weight: 400;
 }
- 
+
 /* ── Formulario nuevo comentario ─────────────────────────── */
 .nuevo-comentario {
   padding: 1rem 1.25rem;
@@ -207,18 +207,18 @@
   flex-direction: column;
   gap: 0.75rem;
 }
- 
+
 .nuevo-comentario-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
- 
+
 .nuevo-comentario-label {
   font-size: 0.875rem;
   color: var(--text-muted);
 }
- 
+
 .comentario-input {
   width: 100%;
   background: var(--bg-tertiary);
@@ -232,46 +232,46 @@
   resize: vertical;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
- 
+
 .comentario-input:focus {
   outline: none;
   border-color: var(--accent-ocean);
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
- 
+
 .comentario-input::placeholder {
   color: var(--text-muted);
 }
- 
+
 .comentario-input-sm {
   min-height: 60px;
   font-size: 0.825rem;
 }
- 
+
 .nuevo-comentario-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
- 
+
 .char-count {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
- 
+
 /* ── Árbol de comentarios ────────────────────────────────── */
 .comentarios-lista {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
- 
+
 .comentario-hilo {
   display: flex;
   flex-direction: column;
   margin-bottom: 1.25rem;
 }
- 
+
 .comentario-card {
   display: flex;
   gap: 0.75rem;
@@ -279,16 +279,16 @@
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
 }
- 
+
 .comentario-card:hover {
   background: rgba(255, 255, 255, 0.02);
 }
- 
+
 .comentario-card.propio {
-  background: rgba(14, 165, 233, 0.04);
-  border-left: 2px solid rgba(14, 165, 233, 0.3);
+  background: rgba(14, 165, 233, 0.08);
+  border-left: 2px solid var(--accent-ocean);
 }
- 
+
 .respuestas-anidadas {
   margin-left: 2.5rem;
   padding-left: 1rem;
@@ -297,18 +297,18 @@
   flex-direction: column;
   gap: 0;
 }
- 
+
 .comentario-respuesta {
   padding: 0.75rem 0.875rem;
 }
- 
+
 .comentario-avatar {
   display: flex;
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
 }
- 
+
 .hilo-linea {
   width: 2px;
   flex: 1;
@@ -317,12 +317,12 @@
   margin-top: 4px;
   border-radius: 1px;
 }
- 
+
 .comentario-cuerpo {
   flex: 1;
   min-width: 0;
 }
- 
+
 .comentario-meta {
   display: flex;
   align-items: center;
@@ -330,7 +330,7 @@
   flex-wrap: wrap;
   margin-bottom: 0.35rem;
 }
- 
+
 .comentario-autor {
   font-size: 0.825rem;
   font-weight: 600;
@@ -338,16 +338,16 @@
   text-decoration: none;
   transition: color var(--transition-fast);
 }
- 
+
 .comentario-autor:hover {
   color: var(--accent-ocean);
 }
- 
+
 .comentario-fecha {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
- 
+
 .comentario-texto {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -355,7 +355,7 @@
   margin: 0 0 0.5rem;
   word-break: break-word;
 }
- 
+
 .btn-responder {
   background: none;
   border: none;
@@ -366,11 +366,11 @@
   padding: 0.2rem 0;
   transition: color var(--transition-fast);
 }
- 
+
 .btn-responder:hover {
   color: var(--accent-ocean);
 }
- 
+
 /* ── Botones de acción del comentario (editar + eliminar) ── */
 /*
  * Los agrupamos en un contenedor flex para que queden
@@ -381,9 +381,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  margin-left: auto;  /* empuja el grupo hacia la derecha */
+  margin-left: auto;
+  /* empuja el grupo hacia la derecha */
 }
- 
+
 /* Estilo base compartido para ambos botones */
 .btn-accion-comentario {
   background: none;
@@ -394,28 +395,29 @@
   border-radius: var(--radius-sm);
   line-height: 1;
   transition: background var(--transition-fast), transform var(--transition-fast);
-  opacity: 0.5;  /* discretos por defecto */
+  opacity: 0.5;
+  /* discretos por defecto */
 }
- 
+
 /* Al hacer hover sobre la card, los botones se vuelven visibles */
 .comentario-card:hover .btn-accion-comentario {
   opacity: 1;
 }
- 
+
 .btn-accion-comentario:hover {
   transform: scale(1.15);
 }
- 
+
 /* El botón de editar se ilumina en azul */
 .btn-editar:hover {
   background: rgba(14, 165, 233, 0.12);
 }
- 
+
 /* El botón de eliminar se ilumina en rojo */
 .btn-eliminar:hover {
   background: rgba(239, 68, 68, 0.12);
 }
- 
+
 .respuesta-form {
   display: flex;
   gap: 0.75rem;
@@ -425,7 +427,7 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
 }
- 
+
 .respuesta-input-wrap {
   flex: 1;
   min-width: 0;
@@ -433,7 +435,7 @@
   flex-direction: column;
   gap: 0.5rem;
 }
- 
+
 /* ── Avatares ─────────────────────────────────────────────── */
 .avatar {
   width: 2.5rem;
@@ -449,32 +451,32 @@
   overflow: hidden;
   flex-shrink: 0;
 }
- 
+
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
- 
+
 .avatar-sm {
   width: 2rem;
   height: 2rem;
   font-size: 0.75rem;
 }
- 
+
 .avatar-xs {
   width: 1.75rem;
   height: 1.75rem;
   font-size: 0.7rem;
 }
- 
+
 /* ── Cargar más ──────────────────────────────────────────── */
 .cargar-mas-wrap {
   display: flex;
   justify-content: center;
   padding: 1rem 0;
 }
- 
+
 /* ── Estado vacío ────────────────────────────────────────── */
 .comentarios-vacios {
   display: flex;
@@ -485,16 +487,16 @@
   text-align: center;
   color: var(--text-muted);
 }
- 
+
 .comentarios-vacios span {
   font-size: 2.5rem;
 }
- 
+
 .comentarios-vacios p {
   margin: 0;
   font-size: 0.875rem;
 }
- 
+
 /* ── Error ───────────────────────────────────────────────── */
 .post-error {
   display: flex;
@@ -505,38 +507,43 @@
   text-align: center;
   color: var(--text-secondary);
 }
- 
+
 .post-error span {
   font-size: 3rem;
 }
- 
+
 .post-error h2 {
   margin: 0;
   color: var(--text-primary);
 }
- 
+
 .post-error p {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-muted);
 }
- 
+
 /* ── Skeleton ────────────────────────────────────────────── */
 @keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
 }
- 
+
 .skeleton-line,
 .skeleton-avatar,
 .skeleton-post-img,
 .skeleton-avatar-sm {
-  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-elevated) 50%, var(--bg-tertiary) 75%);
   background-size: 800px 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 6px;
 }
- 
+
 .post-skeleton {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -544,65 +551,79 @@
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
- 
+
 .skeleton-post-header {
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 1.25rem;
 }
- 
+
 .skeleton-avatar {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
   flex-shrink: 0;
 }
- 
+
 .skeleton-avatar-sm {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
   flex-shrink: 0;
 }
- 
+
 .skeleton-lines {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
- 
+
 .skeleton-line {
   height: 14px;
 }
- 
+
 .skeleton-post-img {
   height: 320px;
   border-radius: 0;
 }
- 
-.w-full  { width: 100%; }
-.w-40    { width: 40%;  }
-.w-24    { width: 24%;  }
-.w-3-4   { width: 75%;  }
-.w-1-2   { width: 50%;  }
- 
+
+.w-full {
+  width: 100%;
+}
+
+.w-40 {
+  width: 40%;
+}
+
+.w-24 {
+  width: 24%;
+}
+
+.w-3-4 {
+  width: 75%;
+}
+
+.w-1-2 {
+  width: 50%;
+}
+
 .comentarios-skeleton {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   padding: 0.5rem 0;
 }
- 
+
 .comentario-skeleton {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
   padding: 0.75rem 1rem;
 }
- 
- 
+
+
 /* ══════════════════════════════════════════════════════════
    MODAL DE EDICIÓN DE COMENTARIO
    
@@ -612,20 +633,23 @@
    2. La card (la ventana en sí)
    3. El contenido (header, body, footer)
    ══════════════════════════════════════════════════════════ */
- 
+
 /* Capa 1: El fondo oscuro que cubre toda la pantalla */
 .modal-edicion-overlay {
-  position: fixed;          /* fijo respecto a la ventana, no al scroll */
-  inset: 0;                 /* top: 0, right: 0, bottom: 0, left: 0 */
+  position: fixed;
+  /* fijo respecto a la ventana, no al scroll */
+  inset: 0;
+  /* top: 0, right: 0, bottom: 0, left: 0 */
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;             /* encima de todo, incluyendo el header */
+  z-index: 200;
+  /* encima de todo, incluyendo el header */
   padding: 1rem;
 }
- 
+
 /* Capa 2: La ventana del modal */
 .modal-edicion-card {
   background: var(--bg-secondary);
@@ -636,18 +660,19 @@
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
   animation: modalEntrar 0.2s ease-out;
 }
- 
+
 @keyframes modalEntrar {
   from {
     opacity: 0;
     transform: scale(0.95) translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
 }
- 
+
 /* Capa 3a: Cabecera con título y botón de cerrar */
 .modal-edicion-header {
   display: flex;
@@ -656,14 +681,14 @@
   padding: 1.25rem 1.25rem 1rem;
   border-bottom: 1px solid var(--border-color);
 }
- 
+
 .modal-edicion-titulo {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
- 
+
 /* El × para cerrar */
 .modal-edicion-cerrar {
   background: none;
@@ -676,12 +701,12 @@
   line-height: 1;
   transition: color var(--transition-fast), background var(--transition-fast);
 }
- 
+
 .modal-edicion-cerrar:hover {
   color: var(--text-primary);
   background: var(--bg-elevated);
 }
- 
+
 /* Capa 3b: Cuerpo con el textarea */
 .modal-edicion-body {
   padding: 1rem 1.25rem;
@@ -689,27 +714,27 @@
   flex-direction: column;
   gap: 0.5rem;
 }
- 
+
 /* El textarea hereda los estilos de .comentario-input,
    pero le damos un tamaño mínimo más generoso */
 .modal-edicion-textarea {
   min-height: 100px;
   resize: vertical;
 }
- 
+
 /* Fila inferior del body: contador + hint de teclado */
 .modal-edicion-footer-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
- 
+
 .modal-edicion-hint {
   font-size: 0.7rem;
   color: var(--text-muted);
   opacity: 0.7;
 }
- 
+
 /* Capa 3c: Pie con los botones */
 .modal-edicion-footer {
   display: flex;
@@ -718,36 +743,57 @@
   padding: 1rem 1.25rem 1.25rem;
   border-top: 1px solid var(--border-color);
 }
- 
+
 /* ── Animaciones del modal con Alpine x-transition ───────── */
-.modal-enter        { transition: opacity 0.2s ease, transform 0.2s ease; }
-.modal-enter-start  { opacity: 0; transform: scale(0.95); }
-.modal-enter-end    { opacity: 1; transform: scale(1); }
-.modal-leave        { transition: opacity 0.15s ease, transform 0.15s ease; }
-.modal-leave-start  { opacity: 1; transform: scale(1); }
-.modal-leave-end    { opacity: 0; transform: scale(0.95); }
- 
- 
+.modal-enter {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.modal-enter-start {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.modal-enter-end {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-leave {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.modal-leave-start {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-leave-end {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   .post-page {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
- 
+
   .respuestas-anidadas {
     margin-left: 1.5rem;
   }
- 
+
   .post-detalle-titulo {
     font-size: 1.2rem;
   }
- 
+
   /* En móvil el modal ocupa más ancho */
   .modal-edicion-card {
     max-width: 100%;
   }
- 
+
   /* En móvil los hints de teclado no tienen mucho sentido */
   .modal-edicion-hint {
     display: none;
@@ -756,7 +802,8 @@
 
 /* ── Modal de confirmación de eliminación ────────────────── */
 .modal-eliminar-card {
-  max-width: 420px;  /* un poco más angosto que el de edición */
+  max-width: 420px;
+  /* un poco más angosto que el de edición */
 }
 
 .modal-eliminar-body {
