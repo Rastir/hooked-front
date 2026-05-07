@@ -7,6 +7,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+## [0.8.0] — 2026-05-06
+
+### Fixed
+- Light mode — paleta completa revisada y corregida en todas las páginas
+- `variables.css` — paleta light mode rediseñada con fondo `#f0f4f8` y cards
+  blancas, textos azul marino para contraste legible
+- `components.css` — header `.nav-header` cambiado de color hardcodeado a
+  `color-mix` con variable, adaptable a ambos temas
+- `base.css` — scrollbar cambiada de colores fijos a variables CSS
+- `perfil.css` — hero gradient, skeletons, textos y badges usando variables
+- `post.css` — fondo de comentario propio cambiado a `color-mix` con variable
+- `index.html` — color de alerta de error cambiado de rgba hardcodeado a
+  `color-mix` con `--accent-danger`
+
+### Added
+- `index.html` — botón toggle de tema flotante en esquina superior derecha
+- `index.html` — carga de `utils.js` e inicialización de tema al arrancar,
+  consistente con el resto de páginas
+
 ## [0.7.0] — 2026-05-05
 
 ### Added

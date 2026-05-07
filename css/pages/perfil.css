@@ -38,10 +38,10 @@
   overflow: hidden;
   /* el gradiente sí se recorta */
   background: linear-gradient(135deg,
-      #0a1628 0%,
-      #0c2a4a 40%,
-      #0a3d62 70%,
-      #0ea5e9 100%);
+      var(--bg-primary) 0%,
+      color-mix(in srgb, var(--accent-ocean) 20%, var(--bg-primary)) 40%,
+      color-mix(in srgb, var(--accent-ocean) 35%, var(--bg-secondary)) 70%,
+      var(--accent-ocean) 100%);
 }
 
 /* Olas decorativas */
@@ -51,7 +51,7 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: var(--bg-primary, #0a0f1c);
+  background: var(--bg-primary);
   clip-path: ellipse(55% 100% at 50% 100%);
   opacity: 0.6;
 }
@@ -67,7 +67,7 @@
   position: absolute;
   bottom: -20px;
   border-radius: 50%;
-  background: rgba(14, 165, 233, 0.15);
+  background: color-mix(in srgb, var(--accent-ocean) 20%, transparent);
   animation: bubble-rise 6s infinite ease-in;
 }
 
@@ -162,8 +162,8 @@
 }
 
 .nivel-badge.principiante {
-  background: #374151;
-  color: #9ca3af;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
 }
 
 .nivel-badge.intermedio {
@@ -261,7 +261,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #6b7280;
+  color: var(--text-muted);
   margin: 0 0 16px;
 }
 
@@ -326,7 +326,7 @@
 
 .record-fecha {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 /* ── TABS ────────────────────────────────────────────────── */
@@ -412,7 +412,7 @@
 
 .post-contenido {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
   flex: 1;
@@ -428,7 +428,7 @@
 .post-likes,
 .post-fecha {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .cargar-mas-wrap {
@@ -576,7 +576,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -704,7 +704,10 @@
 .skeleton-avatar,
 .skeleton-hero,
 .skeleton-img {
-  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background: linear-gradient(90deg,
+      var(--bg-tertiary) 25%,
+      var(--bg-elevated) 50%,
+      var(--bg-tertiary) 75%);
   background-size: 800px 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 6px;
