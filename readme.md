@@ -468,7 +468,7 @@ npx serve .
 | Lightbox de imágenes | ✅ Completo | Desde el feed: imagen completa + panel con likes, comentarios y compartir |
 | Editar/Eliminar comentarios desde lightbox | ✅ Completo | Solo comentarios propios |
 | Editar perfil funcional | ✅ Completo | PUT corregido, campos alineados con backend, foto via Cloudinary |
-| Light mode toggle       | ✅ Completo | Persiste en localStorage, paleta pendiente de ajuste fino |
+| Light mode completo     | ✅ Completo | Paleta revisada en todas las páginas, toggle en todas las vistas incluyendo login 
 | Editar post propio      | ✅ Completo | Desde perfil.html, con modal y upload a Cloudinary |
 | Eliminar post propio    | ✅ Completo | Desde perfil.html, con modal de confirmación |
 | Modal confirm()         | ✅ Completo | Reutilizable via Utils.confirm(), reemplaza el nativo |
@@ -477,7 +477,6 @@ npx serve .
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
-| Light mode — paleta     | 🟡 Media | Textos y fondos pierden contraste en fondo blanco |
 | Editar comentario       | 🟡 Media | HTML preparado, falta abrirEdicion() en post.js |
 | Sistema seguir usuarios | 🟡 Media | Back + front desde cero |
 | Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |

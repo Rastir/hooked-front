@@ -157,7 +157,7 @@
   left: 0;
   right: 0;
   height: var(--header-height);
-  background: rgba(10, 15, 28, 0.8);
+  background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
   z-index: 100;
