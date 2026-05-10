@@ -114,8 +114,10 @@
                 </button>
               </template>
               <template x-if="!esPropioUsuario">
-                <button class="btn btn-primary" @click="toggleSeguir()">
-                  <span x-text="siguiendo ? '✓ Siguiendo' : '+ Seguir'"></span>
+                <button class="btn"
+                  :class="esFishingBuddy ? 'btn-fishing' : (siguiendo ? 'btn-secondary' : 'btn-primary')"
+                  @click="toggleSeguir()">
+                  <span x-text="esFishingBuddy ? '🎣 Fishing Buddy' : (siguiendo ? '✓ Siguiendo' : '+ Seguir')"></span>
                 </button>
               </template>
             </div>
@@ -173,6 +175,14 @@
                   <span class="stat-valor" x-text="diasActivo()"></span>
                   <span class="stat-label">Racha 🔥</span>
                 </div>
+              </div>
+              <div class="stat-item" style="cursor:pointer;" @click="abrirSeguidores()">
+                <span class="stat-valor" x-text="formatNum(usuario.totalSeguidores || 0)"></span>
+                <span class="stat-label">Seguidores</span>
+              </div>
+              <div class="stat-item" style="cursor:pointer;" @click="abrirSiguiendo()">
+                <span class="stat-valor" x-text="formatNum(usuario.totalSiguiendo || 0)"></span>
+                <span class="stat-label">Siguiendo</span>
               </div>
             </div>
 
@@ -422,6 +432,60 @@
                 <option :value="cat.id" x-text="cat.nombre"></option>
               </template>
             </select>
+          </div>
+        </div>
+
+        <!-- MODAL SEGUIDORES -->
+        <div class="modal-overlay" x-show="modalSeguidores" @click.self="modalSeguidores = false" x-transition>
+          <div class="modal-card card" @click.stop>
+            <div class="modal-header">
+              <h2>Seguidores</h2>
+              <button class="btn-close" @click="modalSeguidores = false">✕</button>
+            </div>
+            <div class="modal-body">
+              <template x-if="seguidoresList.length === 0">
+                <p style="color: var(--text-muted); text-align:center;">Sin seguidores aún 🎣</p>
+              </template>
+              <template x-for="s in seguidoresList" :key="s.id">
+                <div class="seguidor-item">
+                  <img
+                    :src="s.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${s.nombre}&backgroundColor=0ea5e9`"
+                    class="seguidor-avatar" :alt="s.nombre" />
+                  <div class="seguidor-info">
+                    <a :href="'perfil.html?id=' + s.id" class="seguidor-nombre" x-text="s.nombre"></a>
+                    <span class="seguidor-nivel" x-text="s.nivelPescador || 'Principiante'"></span>
+                  </div>
+                  <span x-show="s.esFishingBuddy" class="buddy-badge">🎣 Buddy</span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL SIGUIENDO -->
+        <div class="modal-overlay" x-show="modalSiguiendo" @click.self="modalSiguiendo = false" x-transition>
+          <div class="modal-card card" @click.stop>
+            <div class="modal-header">
+              <h2>Siguiendo</h2>
+              <button class="btn-close" @click="modalSiguiendo = false">✕</button>
+            </div>
+            <div class="modal-body">
+              <template x-if="siguiendoList.length === 0">
+                <p style="color: var(--text-muted); text-align:center;">No sigues a nadie aún 🎣</p>
+              </template>
+              <template x-for="s in siguiendoList" :key="s.id">
+                <div class="seguidor-item">
+                  <img
+                    :src="s.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${s.nombre}&backgroundColor=0ea5e9`"
+                    class="seguidor-avatar" :alt="s.nombre" />
+                  <div class="seguidor-info">
+                    <a :href="'perfil.html?id=' + s.id" class="seguidor-nombre" x-text="s.nombre"></a>
+                    <span class="seguidor-nivel" x-text="s.nivelPescador || 'Principiante'"></span>
+                  </div>
+                  <span x-show="s.esFishingBuddy" class="buddy-badge">🎣 Buddy</span>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
 

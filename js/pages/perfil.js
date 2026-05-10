@@ -36,6 +36,13 @@ function perfilApp() {
     // ── Seguir ──────────────────────────────────────────────
     siguiendo: false,
 
+    // ── Seguidores/siguiendo ─────────────────────────
+    esFishingBuddy: false,
+    modalSeguidores: false,
+    modalSiguiendo: false,
+    seguidoresList: [],
+    siguiendoList: [],
+
     // ── Modal edición ───────────────────────────────────────
     modalEdicion: false,
     guardando: false,
@@ -79,6 +86,7 @@ function perfilApp() {
       const usuarioLogueado = this._getUsuarioLogueado();
 
       await this._cargarCategorias();
+      await this._cargarEstadoFollow();
 
       if (!usuarioLogueado) {
         this.error = 'No se encontró sesión activa.';
@@ -145,6 +153,7 @@ function perfilApp() {
           await this._cargarPosts(data.id);
           this._calcularRecords();
           this._calcularTopCapturas();
+          await this._cargarContadoresFollow();
         } catch (err2) {
           this.error = 'No se pudo cargar tu perfil. Intenta de nuevo.';
         }
@@ -170,7 +179,7 @@ function perfilApp() {
         await this._cargarPosts(idUsuario);
         this._calcularRecords();
         this._calcularTopCapturas();
-
+        await this._cargarContadoresFollow();
       } catch (err) {
         console.error('Error cargando perfil:', err);
         this.error = err.message || 'Error al cargar el perfil.';
@@ -391,7 +400,7 @@ function perfilApp() {
         this._toast(err.message || 'No se pudo eliminar el post', 'error');
       }
     },
-    
+
     // ────────────────────────────────────────────────────────
     // CALCULAR TOP CAPTURAS
     // Son los posts que tienen foto, ordenados por likeCount
@@ -488,13 +497,89 @@ function perfilApp() {
     // un endpoint de "seguir", se conecta aquí.
     // ────────────────────────────────────────────────────────
     async toggleSeguir() {
-      this.siguiendo = !this.siguiendo;
-      // TODO: conectar con POST /api/usuarios/{id}/seguir
-      // cuando el backend lo implemente
-      const msg = this.siguiendo
-        ? `Ahora sigues a ${this.usuario.nombre} 🎣`
-        : `Dejaste de seguir a ${this.usuario.nombre}`;
-      this._toast(msg, this.siguiendo ? 'success' : 'info');
+      if (!this.usuario) return;
+
+      try {
+        if (this.siguiendo) {
+          await api.delete(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguir`);
+          this.siguiendo = false;
+          this.esFishingBuddy = false;
+          this.usuario.totalSeguidores = Math.max(0, (this.usuario.totalSeguidores || 1) - 1);
+          this._toast(`Dejaste de seguir a ${this.usuario.nombre}`, 'info');
+        } else {
+          const resp = await api.post(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguir`);
+          this.siguiendo = true;
+          this.esFishingBuddy = resp.esFishingBuddy || false;
+          this.usuario.totalSeguidores = (this.usuario.totalSeguidores || 0) + 1;
+          const msg = this.esFishingBuddy
+            ? `¡Son Fishing Buddies con ${this.usuario.nombre}! 🎣`
+            : `Ahora sigues a ${this.usuario.nombre}`;
+          this._toast(msg, 'success');
+        }
+      } catch (err) {
+        console.error('Error toggle seguir:', err);
+        this._toast(err.message || 'No se pudo procesar', 'error');
+      }
+    },
+
+    // Aquí es donde verificamos si el usuario logueado ya sigue al perfil que estamos viendo
+    async _cargarEstadoFollow() {
+      if (this.esPropioUsuario || !this.usuario) return;
+      try {
+        const sigue = await api.get(
+          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/es-seguidor`
+        );
+        this.siguiendo = sigue === true;
+
+        if (this.siguiendo) {
+          const seguidores = await api.get(
+            `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores`
+          );
+          const usuarioLogueado = this._getUsuarioLogueado();
+          if (usuarioLogueado) {
+            const yo = seguidores.find(s => s.id?.toString() === usuarioLogueado.id?.toString());
+            this.esFishingBuddy = yo?.esFishingBuddy || false;
+          }
+        }
+      } catch (err) {
+        console.error('Error cargando estado follow:', err);
+      }
+    },
+
+    async _cargarContadoresFollow() {
+      if (!this.usuario) return;
+      try {
+        const [seguidores, siguiendo] = await Promise.all([
+          api.get(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores`),
+          api.get(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/siguiendo`)
+        ]);
+        this.usuario.totalSeguidores = seguidores.length;
+        this.usuario.totalSiguiendo = siguiendo.length;
+      } catch (err) {
+        console.error('Error cargando contadores:', err);
+      }
+    },
+
+    async abrirSeguidores() {
+      try {
+        this.seguidoresList = await api.get(
+          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores`
+        );
+        this.modalSeguidores = true;
+      } catch (err) {
+        this._toast('No se pudieron cargar los seguidores', 'error');
+      }
+    },
+
+    async abrirSiguiendo() {
+      try {
+        this.siguiendoList = await api.get(
+          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/siguiendo`
+        );
+        this.modalSiguiendo = true;
+      } catch (err) {
+        this._toast('No se pudo cargar la lista de siguiendo', 'error');
+      }
     },
 
     // ────────────────────────────────────────────────────────

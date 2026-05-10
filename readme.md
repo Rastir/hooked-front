@@ -472,11 +472,13 @@ npx serve .
 | Editar post propio      | ✅ Completo | Desde perfil.html, con modal y upload a Cloudinary |
 | Eliminar post propio    | ✅ Completo | Desde perfil.html, con modal de confirmación |
 | Modal confirm()         | ✅ Completo | Reutilizable via Utils.confirm(), reemplaza el nativo |
+| Sistema de follows     | ✅ Completo | Botón seguir, contadores, modales de listas, badge Fishing Buddy |
  
 ### Pendientes 🚧
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
+| Fix caché follows/likes | 🟡 Media | Forzar consulta directa a BD en perfil, igual que fix histórico de likes |
 | Editar comentario       | 🟡 Media | HTML preparado, falta abrirEdicion() en post.js |
 | Sistema seguir usuarios | 🟡 Media | Back + front desde cero |
 | Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |
