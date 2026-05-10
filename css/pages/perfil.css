@@ -895,3 +895,63 @@
   color: var(--text-muted);
   padding: 8px 0;
 }
+
+/* ── Seguidor items en modales ── */
+.seguidor-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.seguidor-item:last-child {
+  border-bottom: none;
+}
+
+.seguidor-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-tertiary);
+}
+
+.seguidor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.seguidor-nombre {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seguidor-nombre:hover {
+  color: var(--accent-ocean);
+}
+
+.seguidor-nivel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.buddy-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

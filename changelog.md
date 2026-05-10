@@ -7,6 +7,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+## [0.9.0] — 2026-05-09
+
+### Added
+- Sistema de follows en `perfil.html` y `perfil.js`:
+  - Botón dinámico "+ Seguir / ✓ Siguiendo / 🎣 Fishing Buddy" en perfil ajeno
+  - Contadores de Seguidores y Siguiendo en card de estadísticas, clickeables
+  - Modal de lista de Seguidores con avatar, nombre, nivel y badge Fishing Buddy
+  - Modal de lista de Siguiendo con la misma estructura
+  - Detección automática de estado Fishing Buddy al cargar perfil ajeno
+  - Optimistic UI en toggle de follow con actualización de contador local
+- Estilos `.seguidor-item`, `.seguidor-avatar`, `.seguidor-info`,
+  `.seguidor-nombre`, `.seguidor-nivel`, `.buddy-badge` en `perfil.css`
+
+### Pending
+- Consulta directa a BD para estado de follow — actualmente puede servir
+  desde caché del navegador igual que el bug histórico de likes
+
 ## [0.8.0] — 2026-05-06
 
 ### Fixed
