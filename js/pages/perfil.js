@@ -86,7 +86,6 @@ function perfilApp() {
       const usuarioLogueado = this._getUsuarioLogueado();
 
       await this._cargarCategorias();
-      await this._cargarEstadoFollow();
 
       if (!usuarioLogueado) {
         this.error = 'No se encontró sesión activa.';
@@ -179,6 +178,7 @@ function perfilApp() {
         await this._cargarPosts(idUsuario);
         this._calcularRecords();
         this._calcularTopCapturas();
+        await this._cargarEstadoFollow();
         await this._cargarContadoresFollow();
       } catch (err) {
         console.error('Error cargando perfil:', err);
@@ -527,13 +527,13 @@ function perfilApp() {
       if (this.esPropioUsuario || !this.usuario) return;
       try {
         const sigue = await api.get(
-          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/es-seguidor`
+          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/es-seguidor?_t=${Date.now()}`
         );
         this.siguiendo = sigue === true;
 
         if (this.siguiendo) {
           const seguidores = await api.get(
-            `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores`
+            `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores?_t=${Date.now()}`
           );
           const usuarioLogueado = this._getUsuarioLogueado();
           if (usuarioLogueado) {
@@ -549,9 +549,10 @@ function perfilApp() {
     async _cargarContadoresFollow() {
       if (!this.usuario) return;
       try {
+        const ts = Date.now();
         const [seguidores, siguiendo] = await Promise.all([
-          api.get(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores`),
-          api.get(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/siguiendo`)
+          api.get(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores?_t=${ts}`),
+          api.get(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/siguiendo?_t=${ts}`)
         ]);
         this.usuario.totalSeguidores = seguidores.length;
         this.usuario.totalSiguiendo = siguiendo.length;
@@ -563,7 +564,7 @@ function perfilApp() {
     async abrirSeguidores() {
       try {
         this.seguidoresList = await api.get(
-          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores`
+          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores?_t=${Date.now()}`
         );
         this.modalSeguidores = true;
       } catch (err) {
@@ -574,7 +575,7 @@ function perfilApp() {
     async abrirSiguiendo() {
       try {
         this.siguiendoList = await api.get(
-          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/siguiendo`
+          `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/siguiendo?_t=${Date.now()}`
         );
         this.modalSiguiendo = true;
       } catch (err) {
@@ -769,3 +770,4 @@ function perfilApp() {
     },
   };
 }
+ 

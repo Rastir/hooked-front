@@ -435,60 +435,6 @@
           </div>
         </div>
 
-        <!-- MODAL SEGUIDORES -->
-        <div class="modal-overlay" x-show="modalSeguidores" @click.self="modalSeguidores = false" x-transition>
-          <div class="modal-card card" @click.stop>
-            <div class="modal-header">
-              <h2>Seguidores</h2>
-              <button class="btn-close" @click="modalSeguidores = false">✕</button>
-            </div>
-            <div class="modal-body">
-              <template x-if="seguidoresList.length === 0">
-                <p style="color: var(--text-muted); text-align:center;">Sin seguidores aún 🎣</p>
-              </template>
-              <template x-for="s in seguidoresList" :key="s.id">
-                <div class="seguidor-item">
-                  <img
-                    :src="s.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${s.nombre}&backgroundColor=0ea5e9`"
-                    class="seguidor-avatar" :alt="s.nombre" />
-                  <div class="seguidor-info">
-                    <a :href="'perfil.html?id=' + s.id" class="seguidor-nombre" x-text="s.nombre"></a>
-                    <span class="seguidor-nivel" x-text="s.nivelPescador || 'Principiante'"></span>
-                  </div>
-                  <span x-show="s.esFishingBuddy" class="buddy-badge">🎣 Buddy</span>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <!-- MODAL SIGUIENDO -->
-        <div class="modal-overlay" x-show="modalSiguiendo" @click.self="modalSiguiendo = false" x-transition>
-          <div class="modal-card card" @click.stop>
-            <div class="modal-header">
-              <h2>Siguiendo</h2>
-              <button class="btn-close" @click="modalSiguiendo = false">✕</button>
-            </div>
-            <div class="modal-body">
-              <template x-if="siguiendoList.length === 0">
-                <p style="color: var(--text-muted); text-align:center;">No sigues a nadie aún 🎣</p>
-              </template>
-              <template x-for="s in siguiendoList" :key="s.id">
-                <div class="seguidor-item">
-                  <img
-                    :src="s.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${s.nombre}&backgroundColor=0ea5e9`"
-                    class="seguidor-avatar" :alt="s.nombre" />
-                  <div class="seguidor-info">
-                    <a :href="'perfil.html?id=' + s.id" class="seguidor-nombre" x-text="s.nombre"></a>
-                    <span class="seguidor-nivel" x-text="s.nivelPescador || 'Principiante'"></span>
-                  </div>
-                  <span x-show="s.esFishingBuddy" class="buddy-badge">🎣 Buddy</span>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
         <div class="modal-footer">
           <button class="btn btn-ghost" @click="cerrarEdicionPost()">Cancelar</button>
           <button class="btn btn-primary" @click="guardarEdicionPost()" :disabled="guardandoPost">
@@ -499,6 +445,60 @@
       </div>
     </div>
 
+    <!-- ── MODAL SEGUIDORES ── -->
+    <div class="modal-overlay" x-show="modalSeguidores" @click.self="modalSeguidores = false" x-transition>
+      <div class="modal-card card" @click.stop>
+        <div class="modal-header">
+          <h2>👥 Seguidores</h2>
+          <button class="btn-close" @click="modalSeguidores = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <template x-if="seguidoresList.length === 0">
+            <p style="color: var(--text-muted); text-align:center; padding: 24px 0;">Sin seguidores aún 🎣</p>
+          </template>
+          <template x-for="s in seguidoresList" :key="s.id">
+            <div class="seguidor-item">
+              <img
+                :src="s.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${s.nombre}&backgroundColor=0ea5e9`"
+                class="seguidor-avatar" :alt="s.nombre" />
+              <div class="seguidor-info">
+                <a :href="'perfil.html?id=' + s.id" class="seguidor-nombre" x-text="s.nombre"></a>
+                <span class="seguidor-nivel" x-text="s.nivelPescador || 'Principiante'"></span>
+              </div>
+              <span x-show="s.esFishingBuddy" class="buddy-badge">🎣 Buddy</span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- ── MODAL SIGUIENDO ── -->
+    <div class="modal-overlay" x-show="modalSiguiendo" @click.self="modalSiguiendo = false" x-transition>
+      <div class="modal-card card" @click.stop>
+        <div class="modal-header">
+          <h2>👣 Siguiendo</h2>
+          <button class="btn-close" @click="modalSiguiendo = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <template x-if="siguiendoList.length === 0">
+            <p style="color: var(--text-muted); text-align:center; padding: 24px 0;">No sigues a nadie aún 🎣</p>
+          </template>
+          <template x-for="s in siguiendoList" :key="s.id">
+            <div class="seguidor-item">
+              <img
+                :src="s.fotoPerfil || `https://api.dicebear.com/7.x/initials/svg?seed=${s.nombre}&backgroundColor=0ea5e9`"
+                class="seguidor-avatar" :alt="s.nombre" />
+              <div class="seguidor-info">
+                <a :href="'perfil.html?id=' + s.id" class="seguidor-nombre" x-text="s.nombre"></a>
+                <span class="seguidor-nivel" x-text="s.nivelPescador || 'Principiante'"></span>
+              </div>
+              <span x-show="s.esFishingBuddy" class="buddy-badge">🎣 Buddy</span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+ 
   </main>
 
   <!-- ── MOBILE NAV ─────────────────────────────────────────── -->

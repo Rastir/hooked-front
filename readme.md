@@ -91,7 +91,7 @@ hooked-frontend/
 |--------|---------------|
 | **Módulo de configuración** | `CONFIG` global centraliza todas las URLs y keys |
 | **API Client class** | `ApiClient` encapsula todo el fetch con headers, retry y refresh |
-| **Componentes Alpine** | Cada página es un `Alpine.data()` autocontenido |
+| **Componentes Alpine** | Cada página es un `Alpine.data()` autocontenido, ⚠️ Los modales deben ser hijos directos del componente Alpine raíz (`<main>`),nunca anidados dentro de otro modal, para evitar conflictos con `overflow` y `z-index`. |
 | **Optimistic UI** | Los likes se actualizan visualmente antes de confirmar con el backend |
 | **Guard de rutas** | `auth.js` redirige a `index.html` si no hay sesión activa |
 | **Toast system** | Eventos globales `window.dispatchEvent('toast')` para notificaciones |
@@ -473,12 +473,14 @@ npx serve .
 | Eliminar post propio    | ✅ Completo | Desde perfil.html, con modal de confirmación |
 | Modal confirm()         | ✅ Completo | Reutilizable via Utils.confirm(), reemplaza el nativo |
 | Sistema de follows     | ✅ Completo | Botón seguir, contadores, modales de listas, badge Fishing Buddy |
+| Fix caché follows        | ✅ Completo | `?_t=Date.now()` en todos los endpoints de follows en perfil.js |
+| Fix botón seguir         | ✅ Completo | `_cargarEstadoFollow()` reubicado después de cargar `this.usuario` |
+| Modales seguidores/siguiendo | ✅ Completo | Click en contadores abre lista con avatar, nivel y badge Fishing Buddy |
  
 ### Pendientes 🚧
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
-| Fix caché follows/likes | 🟡 Media | Forzar consulta directa a BD en perfil, igual que fix histórico de likes |
 | Editar comentario       | 🟡 Media | HTML preparado, falta abrirEdicion() en post.js |
 | Sistema seguir usuarios | 🟡 Media | Back + front desde cero |
 | Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |

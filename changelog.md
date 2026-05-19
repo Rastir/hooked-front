@@ -7,6 +7,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+## [0.10.0] — 2026-05-19
+
+### Fixed
+- `perfil.js` — `_cargarEstadoFollow()` se llamaba en `init()` antes de que
+  `this.usuario` existiera, causando que el guard `!this.usuario` la cortara
+  siempre y dejara `this.siguiendo = false`. El botón seguir ejecutaba
+  `POST /seguir` aunque ya siguieras al usuario, provocando error 400 del backend.
+  Corregido moviendo la llamada dentro de `_cargarPerfil()`, después de que
+  `this.usuario` ya tiene datos.
+- `perfil.js` — endpoints de follows sin cache-buster, el navegador podía servir
+  estado desactualizado desde caché. Agregado `?_t=Date.now()` a:
+  `es-seguidor`, `seguidores` (×3) y `siguiendo` (×2).
+  - `perfil.html` — modales de Seguidores y Siguiendo estaban anidados dentro
+  del modal de Editar Post, causando que el `overflow-y: auto` del modal padre
+  los recortara e impidiera mostrarlos correctamente. Movidos al mismo nivel
+  que los demás modales, como hijos directos de `<main>`.
+
 ## [0.9.0] — 2026-05-09
 
 ### Added
