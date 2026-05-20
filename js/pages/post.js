@@ -52,9 +52,7 @@ function postApp() {
     textoEdicion: '',
     enviandoEdicion: false,
 
-    // ── Estado modal de confirmación de eliminación ──────────
-    modalEliminarAbierto: false,
-    comentarioAEliminar: null,   // guardamos cuál comentario quiere borrar
+    // ── Estado eliminación ───────────────────────────────────
     eliminando: false,
 
     // ── Usuario logueado ─────────────────────────────────────
@@ -370,19 +368,6 @@ function postApp() {
     // ────────────────────────────────────────────────────────
     // ELIMINAR COMENTARIO O RESPUESTA
     // ────────────────────────────────────────────────────────
-    // Abre el modal de confirmación (reemplaza al confirm() nativo)
-    confirmarEliminar(comentario) {
-      this.comentarioAEliminar = comentario;
-      this.modalEliminarAbierto = true;
-    },
-
-    cerrarEliminar() {
-      this.modalEliminarAbierto = false;
-      setTimeout(() => {
-        this.comentarioAEliminar = null;
-      }, 200);
-    },
-
     async eliminarComentario(comentario) {
       const ok = await Utils.confirm({
         icono: '🗑️',

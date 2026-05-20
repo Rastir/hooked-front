@@ -208,6 +208,33 @@ Vista completa de un post individual con su hilo de comentarios anidados.
 ## 🎨 Sistema de Estilos
  
 El sistema de diseño usa **CSS Custom Properties** (variables) como tokens, permitiendo theming sin JavaScript.
+
+## Decisiones de diseño
+
+### Filtro de categorías
+El parámetro que espera el backend es `categoriaId` (definido en
+`@RequestParam(name = "categoriaId")` en `PostController.java`).
+El frontend lo manda en el query string como `&categoriaId={id}`.
+ 
+### Widget "Tip del día"
+Los tips están hardcodeados en `feed.js` dentro del Alpine component `tipsWidget`.
+El tip visible se calcula así:
+ 
+```js
+const inicio = new Date(new Date().getFullYear(), 0, 0);
+const diaDelAnio = Math.floor((Date.now() - inicio) / 86_400_000);
+tipActual = diaDelAnio % tips.length;
+```
+ 
+- Sin backend, sin localStorage, sin timers.
+- Cambia solo al cambiar el día del año.
+- Para agregar más tips: añadir objetos `{ emoji, categoria, tip }` al array
+  `tips` en `feed.js`.
+### Imagen en detalle de post
+Se usa `object-fit: contain` en lugar de `cover` para que fotos verticales,
+horizontales y cuadradas se muestren completas. El contenedor no tiene
+`max-height` fijo para no recortar imágenes muy verticales.
+ 
  
 ### Tema actual: Deep Ocean (Dark Mode)
  
@@ -476,13 +503,17 @@ npx serve .
 | Fix caché follows        | ✅ Completo | `?_t=Date.now()` en todos los endpoints de follows en perfil.js |
 | Fix botón seguir         | ✅ Completo | `_cargarEstadoFollow()` reubicado después de cargar `this.usuario` |
 | Modales seguidores/siguiendo | ✅ Completo | Click en contadores abre lista con avatar, nivel y badge Fishing Buddy |
+| Filtro de posts por categoría | ✅ Funcional | `feed.js`, `PostController.java` |
+| Widget "Tip del día" en sidebar | ✅ Completo | `feed.js`, `feed.html`, `feed.css` |
+| Chips de categorías con scroll | ✅ Completo | `feed.html`, `feed.css` |
+| Imagen completa en detalle de post | ✅ Fixed | `post.css` |
+| Modal de confirmación unificado | ✅ Fixed | `post.js`, `post.html` |
  
 ### Pendientes 🚧
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
 | Editar comentario       | 🟡 Media | HTML preparado, falta abrirEdicion() en post.js |
-| Sistema seguir usuarios | 🟡 Media | Back + front desde cero |
 | Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |
 | Notificaciones | 🟢 Baja | Requiere WebSocket en el backend |
  

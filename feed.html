@@ -85,29 +85,38 @@
                 </div>
             </div>
 
-            <div class="sidebar-card">
-                <div class="sidebar-title">Categorías</div>
-
-                <div class="trending-item" @click.prevent="filterByCategory('todo')">
-                    <div class="trending-rank" style="background: var(--accent-ocean); color: white;">#</div>
-                    <div class="trending-info">
-                        <div class="trending-name">Todas</div>
-                    </div>
+            <!-- Widget tips de pesca -->
+            <div class="tips-widget" x-data="tipsWidget()" x-init="init()">
+                <div class="tips-header">
+                    <span class="tips-label">💡 Tip del día</span>
+                    <span class="tips-categoria" x-text="tip.categoria"></span>
                 </div>
-
-                <template x-for="cat in (categorias || [])" :key="cat.id">
-                    <div class="trending-item" @click.prevent="filterByCategory(cat.id)">
-                        <div class="trending-rank" x-text="cat.id"></div>
-                        <div class="trending-info">
-                            <div class="trending-name" x-text="cat.nombre"></div>
-                            <div class="trending-count" x-text="cat.descripcion || ''"></div>
-                        </div>
-                    </div>
-                </template>
+                <div class="tips-body">
+                    <div class="tips-emoji" x-text="tip.emoji"></div>
+                    <p class="tips-texto" x-text="tip.tip"></p>
+                </div>
             </div>
         </aside>
 
         <!-- Main Content -->
+        <div class="main-col">
+
+        <!-- Chips de categorías -->
+        <div class="categorias-chips-wrap">
+            <div class="categorias-chips">
+                <button class="categoria-chip" :class="{ 'active': !selectedCategory || selectedCategory === 'todo' }"
+                    @click="filterByCategory('todo')">
+                    <span>#</span> Todas
+                </button>
+                <template x-for="cat in (categorias || [])" :key="cat.id">
+                    <button class="categoria-chip" :class="{ 'active': selectedCategory == cat.id }"
+                        @click="filterByCategory(cat.id)">
+                        <span x-text="cat.nombre"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+
         <main class="main-content">
 
             <!-- Loading -->
@@ -213,6 +222,7 @@
             </div>
 
         </main>
+        </div><!-- /main-col -->
     </div>
 
     <!-- Mobile nav -->

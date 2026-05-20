@@ -223,7 +223,7 @@
                           <button class="btn-accion-comentario btn-editar" @click="abrirEdicion(comentario)"
                             title="Editar comentario">✏️</button>
                           <!-- Botón eliminar -->
-                          <button class="btn-accion-comentario btn-eliminar" @click="confirmarEliminar(comentario)"
+                          <button class="btn-accion-comentario btn-eliminar" @click="eliminarComentario(comentario)"
                             title="Eliminar comentario">🗑️</button>
                         </div>
                       </template>
@@ -283,7 +283,7 @@
                               <div class="comentario-acciones-propias">
                                 <button class="btn-accion-comentario btn-editar" @click="abrirEdicion(respuesta)"
                                   title="Editar respuesta">✏️</button>
-                                <button class="btn-accion-comentario btn-eliminar" @click="confirmarEliminar(respuesta)"
+                                <button class="btn-accion-comentario btn-eliminar" @click="eliminarComentario(respuesta)"
                                   title="Eliminar respuesta">🗑️</button>
                               </div>
                             </template>
@@ -356,37 +356,6 @@
           :disabled="!textoEdicion.trim() || enviandoEdicion">
           <span x-show="!enviandoEdicion">Guardar cambios</span>
           <span x-show="enviandoEdicion">Guardando...</span>
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN -->
-  <div class="modal-edicion-overlay" x-show="modalEliminarAbierto" @click.self="cerrarEliminar()"
-    @keydown.escape.window="cerrarEliminar()" style="display: none;">
-    <div class="modal-edicion-card modal-eliminar-card">
-
-      <div class="modal-edicion-header">
-        <h3 class="modal-edicion-titulo">🗑️ Eliminar comentario</h3>
-        <button class="modal-edicion-cerrar" @click="cerrarEliminar()">✕</button>
-      </div>
-
-      <div class="modal-eliminar-body">
-        <div class="modal-eliminar-icono">⚠️</div>
-        <p class="modal-eliminar-mensaje">
-          ¿Estás seguro de que quieres eliminar este comentario?
-          <strong>¡Este proceso es irreversible!</strong>
-        </p>
-      </div>
-
-      <div class="modal-edicion-footer">
-        <button class="btn btn-secondary btn-sm" @click="cerrarEliminar()" :disabled="eliminando">
-          Cancelar
-        </button>
-        <button class="btn btn-danger btn-sm" @click="eliminarComentario()" :disabled="eliminando">
-          <span x-show="!eliminando">Sí, eliminar</span>
-          <span x-show="eliminando">Eliminando...</span>
         </button>
       </div>
 
