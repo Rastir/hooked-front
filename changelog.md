@@ -7,6 +7,38 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+## [0.11.0] — 2026-05-20
+ 
+### Added
+- `feed.js` — Widget "Tip del día" en el sidebar: muestra uno de 12 consejos de
+  pesca hardcodeados, seleccionado por día del año (`diaDelAnio % tips.length`).
+  Cambia automáticamente al día siguiente sin intervención del usuario ni llamadas
+  al backend.
+- `feed.html` / `feed.css` — Barra de chips de categorías sobre el feed principal,
+  con scroll horizontal invisible en móvil. Reemplaza el sidebar de categorías
+  que mostraba descripción completa y desbordaba la pantalla a resolución nativa.
+### Fixed
+- `feed.js` — Parámetro del filtro de categorías corregido de `&categoria=` a
+  `&categoriaId=`, alineado con el `@RequestParam(name = "categoriaId")` del
+  `PostController.java`. El filtro ahora funciona correctamente.
+- `feed.js` — `eliminarComentarioLightbox()` usaba `confirm()` nativo del
+  navegador. Reemplazado por `Utils.confirm()` con el modal estilizado del proyecto.
+- `post.css` — Imagen del post en `post.html` recortada por `object-fit: cover`
+  dentro de contenedor con `max-height: 480px`. Cambiado a `object-fit: contain`
+  y `height: auto` para mostrar la imagen completa sin recortar.
+- `post.js` / `post.html` — Modal de confirmación de eliminación de comentario
+  duplicado: existía un modal manual en el HTML (`modalEliminarAbierto`) y además
+  `eliminarComentario()` ya usaba `Utils.confirm()`. Eliminado el modal redundante;
+  todos los botones 🗑️ (nivel 1 y nivel 2) llaman directo a `eliminarComentario(comentario)`.
+### Removed
+- `feed.css` — Clases `.tips-footer`, `.tips-dots`, `.tips-dot`, `.tips-nav`,
+  `.tips-nav-btn` eliminadas (navegación manual del widget de tips descartada).
+- `post.html` — Modal de confirmación de eliminación hardcodeado en HTML removido.
+- `post.css` — Clases `.modal-eliminar-card`, `.modal-eliminar-body`,
+  `.modal-eliminar-icono`, `.modal-eliminar-mensaje` eliminadas (ya no se usan).
+- `feed.html` — Sidebar de categorías con `trending-item` eliminado y reemplazado
+  por chips horizontales.
+
 ## [0.10.0] — 2026-05-19
 
 ### Fixed

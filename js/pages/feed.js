@@ -78,7 +78,7 @@ document.addEventListener('alpine:init', () => {
       try {
         let endpoint = `${CONFIG.ENDPOINTS.POSTS}?page=${this.currentPage}&size=10&_t=${Date.now()}`;
         if (this.selectedCategory && this.selectedCategory !== 'todo') {
-          endpoint += `&categoria=${this.selectedCategory}`;
+          endpoint += `&categoriaId=${this.selectedCategory}`;
         }
 
         console.log('[FEED] Endpoint:', endpoint);
@@ -482,7 +482,15 @@ document.addEventListener('alpine:init', () => {
     },
 
     async eliminarComentarioLightbox(comentario) {
-      if (!confirm('¿Eliminar este comentario?')) return;
+      const ok = await Utils.confirm({
+        icono: '🗑️',
+        titulo: '¿Eliminar comentario?',
+        mensaje: 'Esta acción no se puede deshacer.',
+        btnOk: 'Eliminar',
+        btnCancel: 'Cancelar',
+        peligro: true,
+      });
+      if (!ok) return;
 
       try {
         await api.delete(`${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}`);
@@ -517,6 +525,39 @@ document.addEventListener('alpine:init', () => {
       window.dispatchEvent(new CustomEvent('toast', {
         detail: { message, type }
       }));
+    }
+  }));
+
+  // ── Widget de tips de pesca ──────────────────────────────────
+  Alpine.data('tipsWidget', () => ({
+    tipActual: 0,
+
+    tips: [
+      { emoji: '🌅', categoria: 'Horario', tip: 'Las mejores mordidas son al amanecer y al atardecer, cuando la luz es baja y los peces suben a alimentarse.' },
+      { emoji: '🌊', categoria: 'Agua', tip: 'En agua turbia usa señuelos de colores brillantes como naranja o chartreuse. En agua clara, tonos naturales y transparentes.' },
+      { emoji: '🎣', categoria: 'Técnica', tip: 'Varía la velocidad del curricán. A veces un tirón brusco seguido de pausa es lo que provoca el ataque.' },
+      { emoji: '🌡️', categoria: 'Temperatura', tip: 'Los peces son de sangre fría. Cuando el agua baja de 15°C se vuelven más lentos — usa señuelos más pequeños y muévelos despacio.' },
+      { emoji: '🪱', categoria: 'Carnada', tip: 'La lombriz de tierra sigue siendo la carnada más efectiva para agua dulce. Cámbiala cada 20-30 minutos para que siga activa.' },
+      { emoji: '🌙', categoria: 'Luna', tip: 'Luna llena y luna nueva son los mejores días para pescar. La gravedad lunar afecta el comportamiento de los peces.' },
+      { emoji: '🌿', categoria: 'Habitat', tip: 'Busca estructuras bajo el agua: rocas, troncos, plantas acuáticas. Los peces se refugian ahí para cazar.' },
+      { emoji: '🎯', categoria: 'Precisión', tip: 'Lanza paralelo a la orilla, no hacia el centro. La mayoría de peces se alimentan cerca de la vegetación costera.' },
+      { emoji: '🤫', categoria: 'Silencio', tip: 'Los peces detectan vibración a través de la línea lateral. Camina suave en la orilla y evita golpear la embarcación.' },
+      { emoji: '🪝', categoria: 'Anzuelo', tip: 'Un anzuelo sin filo es el error más común. Pruébalo en tu uña — si resbala, afílalo. Un buen filo duplica tus capturas.' },
+      { emoji: '☁️', categoria: 'Clima', tip: 'Los días nublados son ideales. Sin sol directo los peces se sienten seguros y se mueven más, especialmente truchas.' },
+      { emoji: '🎶', categoria: 'Paciencia', tip: 'El 10% del agua contiene el 90% de los peces. Aprende a leer el río: corrientes, remansos, cambios de profundidad.' },
+    ],
+
+    get tip() {
+      return this.tips[this.tipActual];
+    },
+
+    init() {
+      // Un tip fijo por día del año — cambia solo al día siguiente.
+      // Es como un calendario de consejos: hoy siempre verás el mismo,
+      // mañana aparece el siguiente automáticamente.
+      const inicio = new Date(new Date().getFullYear(), 0, 0);
+      const diaDelAnio = Math.floor((Date.now() - inicio) / 86_400_000);
+      this.tipActual = diaDelAnio % this.tips.length;
     }
   }));
 
