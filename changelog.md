@@ -7,6 +7,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+## [0.12.0] — 2026-06-02
+
+### Added
+- `feed.html` / `feed.js` — Botón "🔍 Buscar en Hooked" en el sidebar,
+  debajo del widget Tips del día
+- Modal de búsqueda global con 5 tabs: Todo, Posts, Personas,
+  Spots (próximamente) y Tiendas (próximamente)
+- Búsqueda en tiempo real con debounce de 400ms — lanza peticiones
+  en paralelo a `GET /api/usuarios/buscar-avanzado?q=` y
+  `GET /api/posts?busqueda=` usando `Promise.all`
+- Tab "Todo" muestra mezcla de resultados: máx. 3 personas + 4 posts
+- Tabs Spots y Tiendas con placeholder "Próximamente" y badge visual
+- `buscarApp` implementado como `Alpine.data` independiente de `feedApp`,
+  comunicados vía `$dispatch('abrir-buscador')` / `@abrir-buscador.window`
+- `feed.css` — bloque de estilos del buscador: overlay, modal, tabs,
+  cards de resultado para usuarios y posts, spinner, estados vacíos
+  y placeholders "Próximamente"
+
+### Pending (deuda técnica registrada)
+- Backend: tipos de cuenta diferenciados — usuario / tienda
+- Backend + Maps: entidad `Spot` con geolocalización para tab de Spots
+
 ## [0.11.0] — 2026-05-20
  
 ### Added
