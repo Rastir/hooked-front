@@ -712,3 +712,425 @@
   margin: 0;
 }
  
+/* ── Botón "Buscar en Hooked" en el sidebar ── */
+.buscar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: color-mix(in srgb, var(--accent-ocean) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-ocean) 30%, transparent);
+  border-radius: 0.75rem;
+  color: var(--accent-ocean);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+ 
+.buscar-btn:hover {
+  background: color-mix(in srgb, var(--accent-ocean) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent-ocean) 55%, transparent);
+}
+ 
+/* ── Overlay del modal ── */
+.buscar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 1rem 1rem;
+}
+ 
+/* ── Caja del modal ── */
+.buscar-modal {
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+ 
+/* ── Barra de input ── */
+.buscar-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+ 
+.buscar-input-icon {
+  font-size: 1.1rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+ 
+.buscar-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+ 
+.buscar-input::placeholder {
+  color: var(--text-muted);
+}
+ 
+.buscar-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+ 
+.buscar-close:hover {
+  color: var(--text-primary);
+}
+ 
+/* ── Tabs ── */
+.buscar-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+ 
+.buscar-tabs::-webkit-scrollbar {
+  display: none;
+}
+ 
+.buscar-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+ 
+.buscar-tab.active {
+  color: var(--accent-ocean);
+  border-bottom-color: var(--accent-ocean);
+}
+ 
+.buscar-tab:hover:not(.active):not(.buscar-tab--pronto) {
+  color: var(--text-secondary);
+}
+ 
+.buscar-tab--pronto {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+ 
+.buscar-tab-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 20%, transparent);
+}
+ 
+/* ── Cuerpo de resultados ── */
+.buscar-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+ 
+/* Estado vacío inicial */
+.buscar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+ 
+.buscar-empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.5;
+}
+ 
+.buscar-empty p {
+  font-size: 0.875rem;
+  margin: 0;
+}
+ 
+/* Sin resultados */
+.buscar-sin-resultados {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+ 
+/* Spinner de carga */
+.buscar-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+ 
+.buscar-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent-ocean);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+ 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+ 
+/* Título de sección en tab "Todo" */
+.buscar-seccion-titulo {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.75rem 0.5rem 0.25rem;
+}
+ 
+.buscar-divider {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 0.5rem 0;
+}
+ 
+/* ── Card resultado: Usuario ── */
+.buscar-res-usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.5rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+ 
+.buscar-res-usuario:hover {
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+}
+ 
+.buscar-res-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-ocean) 20%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-ocean);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+ 
+.buscar-res-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+ 
+.buscar-res-info {
+  flex: 1;
+  min-width: 0;
+}
+ 
+.buscar-res-nombre {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+ 
+.buscar-res-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+ 
+.buscar-res-nivel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-ocean) 15%, transparent);
+  color: var(--accent-ocean);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+ 
+/* ── Card resultado: Post ── */
+.buscar-res-post {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.65rem 0.5rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  align-items: flex-start;
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+ 
+.buscar-res-post:hover {
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+}
+ 
+.buscar-res-post-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+ 
+.buscar-res-post-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+ 
+.buscar-res-post-info {
+  flex: 1;
+  min-width: 0;
+}
+ 
+.buscar-res-post-titulo {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+ 
+.buscar-res-post-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.2rem;
+  flex-wrap: wrap;
+}
+ 
+.buscar-res-post-autor {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+ 
+.buscar-res-post-cat {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-ocean) 12%, transparent);
+  color: var(--accent-ocean);
+}
+ 
+.buscar-res-post-contenido {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+}
+ 
+/* ── Placeholder Próximamente ── */
+.buscar-proximamente {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 0.75rem;
+  text-align: center;
+}
+ 
+.buscar-prox-icon {
+  font-size: 3rem;
+}
+ 
+.buscar-proximamente h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+ 
+.buscar-proximamente p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-width: 280px;
+  line-height: 1.6;
+}
+ 
+.badge-pronto {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-ocean) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-ocean) 35%, transparent);
+  color: var(--accent-ocean);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

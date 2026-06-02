@@ -508,14 +508,25 @@ npx serve .
 | Chips de categorías con scroll | ✅ Completo | `feed.html`, `feed.css` |
 | Imagen completa en detalle de post | ✅ Fixed | `post.css` |
 | Modal de confirmación unificado | ✅ Fixed | `post.js`, `post.html` |
- 
+| `feed.html` / `feed.js` | Feed principal | ✅ Completada |
+| Buscador global (modal) | Búsqueda de posts y personas en tiempo real | ✅ Completada |
+
 ### Pendientes 🚧
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
 | Editar comentario       | 🟡 Media | HTML preparado, falta abrirEdicion() en post.js |
-| Búsqueda de posts | 🟢 Baja | Barra de búsqueda en el feed |
+| Spots de pesca          | 🟡 Media | Búsqueda con integración a mapas  |
+| Tiendas                 | 🟡 Media  | Perfil de tienda + búsqueda |
 | Notificaciones | 🟢 Baja | Requiere WebSocket en el backend |
+
+## 🚧 Deuda técnica
+
+| Área     | Descripción                                                  | Prioridad |
+|----------|--------------------------------------------------------------|-----------|
+| Backend  | Tipos de cuenta diferenciados: `USUARIO` / `TIENDA`          | Alta      |
+| Backend  | Entidad `Spot` con campos de geolocalización (lat, lng, nombre, descripción) | Media |
+| Frontend | Integración de Google Maps / Leaflet para tab de Spots       | Media     |
  
 ---
  
