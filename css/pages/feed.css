@@ -1,5 +1,5 @@
 /* Estilos específicos del feed */
-
+ 
 /* Posts */
 .post-card {
   background: var(--bg-secondary);
@@ -9,12 +9,12 @@
   margin-bottom: 1.5rem;
   transition: transform 0.2s, box-shadow 0.2s;
 }
-
+ 
 .post-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px var(--shadow-color);
 }
-
+ 
 .post-header {
   display: flex;
   align-items: center;
@@ -22,7 +22,7 @@
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
 }
-
+ 
 .avatar {
   width: 2.5rem;
   height: 2.5rem;
@@ -37,18 +37,18 @@
   overflow: hidden;
   flex-shrink: 0;
 }
-
+ 
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
+ 
 .post-meta {
   flex: 1;
   min-width: 0;
 }
-
+ 
 .post-author {
   font-weight: 600;
   color: var(--text-primary);
@@ -59,16 +59,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+ 
 .post-author:hover {
   color: var(--accent-ocean);
 }
-
+ 
 .post-time {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-
+ 
 .post-category {
   display: inline-flex;
   align-items: center;
@@ -81,7 +81,7 @@
   text-decoration: none;
   white-space: nowrap;
 }
-
+ 
 .post-image {
   width: 100%;
   aspect-ratio: 16/9;
@@ -89,11 +89,11 @@
   background: var(--bg-tertiary);
   display: block;
 }
-
+ 
 .post-content {
   padding: 1.25rem;
 }
-
+ 
 .post-title {
   font-size: 1.125rem;
   font-weight: 600;
@@ -101,7 +101,7 @@
   color: var(--text-primary);
   line-height: 1.4;
 }
-
+ 
 .post-text {
   color: var(--text-secondary);
   font-size: 0.875rem;
@@ -111,7 +111,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
+ 
 .post-actions {
   display: flex;
   align-items: center;
@@ -120,7 +120,7 @@
   border-top: 1px solid var(--border-color);
   background: var(--bg-tertiary);
 }
-
+ 
 .action-btn {
   display: flex;
   align-items: center;
@@ -136,53 +136,84 @@
   transition: all 0.2s;
   text-decoration: none;
 }
-
+ 
 .action-btn:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
 }
-
+ 
 .action-btn.active {
   color: var(--accent-fishing);
 }
-
-/* Floating Action Button */
-.fab {
+ 
+/* ── Bottom nav (Crear / Feed / Perfil) ─────────────────── */
+.mobile-bottom-nav {
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-ocean), var(--accent-fishing));
-  border: none;
-  color: white;
-  font-size: 1.5rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3.75rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  z-index: 100;
+  display: flex;
+  align-items: stretch;
+  backdrop-filter: blur(8px);
+}
+ 
+.mobile-bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 119, 182, 0.3);
-  transition: transform 0.2s, box-shadow 0.2s;
-  z-index: 50;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: color 0.15s ease;
+  padding: 0.25rem 0;
+}
+ 
+.mobile-bottom-nav-item:hover,
+.mobile-bottom-nav-item.active {
+  color: var(--accent-ocean);
+}
+ 
+.mobile-bottom-nav-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+ 
+/* Botón central de Crear — destacado con color */
+.mobile-bottom-nav-item--crear {
+  color: var(--accent-ocean);
+}
+ 
+.mobile-bottom-nav-item--crear .mobile-bottom-nav-icon {
+  background: var(--accent-ocean);
+  color: white;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-decoration: none;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
 }
-
-.fab:hover {
-  transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
+ 
+/* Espacio en el fondo para que el último post
+   no quede escondido detrás de la barra */
+.pb-safe {
+  padding-bottom: calc(3.75rem + 1rem) !important;
 }
-
-@media (max-width: 768px) {
-  .fab {
-    bottom: 5rem;
-    right: 1rem;
-    width: 3rem;
-    height: 3rem;
-    font-size: 1.25rem;
-  }
-}
-
+ 
 /* Sidebar */
 .sidebar-user {
   display: flex;
@@ -194,12 +225,12 @@
   border: 1px solid var(--border-color);
   margin-bottom: 1rem;
 }
-
+ 
 .sidebar-user-info {
   flex: 1;
   min-width: 0;
 }
-
+ 
 .sidebar-user-name {
   font-weight: 600;
   color: var(--text-primary);
@@ -208,7 +239,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+ 
 .sidebar-user-email {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -216,7 +247,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+ 
 .trending-item {
   display: flex;
   align-items: center;
@@ -226,11 +257,11 @@
   transition: background 0.2s;
   cursor: pointer;
 }
-
+ 
 .trending-item:hover {
   background: var(--bg-tertiary);
 }
-
+ 
 .trending-rank {
   width: 1.5rem;
   height: 1.5rem;
@@ -244,12 +275,12 @@
   color: var(--accent-ocean);
   flex-shrink: 0;
 }
-
+ 
 .trending-info {
   flex: 1;
   min-width: 0;
 }
-
+ 
 .trending-name {
   font-weight: 500;
   font-size: 0.875rem;
@@ -258,25 +289,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+ 
 .trending-count {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-
+ 
 /* Estados */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
   color: var(--text-secondary);
 }
-
+ 
 .empty-state-icon {
   font-size: 4rem;
   margin-bottom: 1rem;
   opacity: 0.5;
 }
-
+ 
 /* Loading Skeletons */
 .loading-skeleton {
   background: var(--bg-secondary);
@@ -285,13 +316,13 @@
   margin-bottom: 1.5rem;
   border: 1px solid var(--border-color);
 }
-
+ 
 .skeleton-header {
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
 }
-
+ 
 .skeleton-avatar {
   width: 2.5rem;
   height: 2.5rem;
@@ -301,7 +332,7 @@
   animation: shimmer 1.5s infinite;
   flex-shrink: 0;
 }
-
+ 
 .skeleton-lines {
   flex: 1;
   display: flex;
@@ -309,7 +340,7 @@
   gap: 0.5rem;
   justify-content: center;
 }
-
+ 
 .skeleton-line {
   height: 0.875rem;
   background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-elevated) 50%, var(--bg-tertiary) 75%);
@@ -317,15 +348,15 @@
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);
 }
-
+ 
 .skeleton-line.short {
   width: 40%;
 }
-
+ 
 .skeleton-line.medium {
   width: 70%;
 }
-
+ 
 .skeleton-image {
   height: 200px;
   background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-elevated) 50%, var(--bg-tertiary) 75%);
@@ -334,12 +365,12 @@
   border-radius: var(--radius-md);
   margin-bottom: 1rem;
 }
-
+ 
 /* Utilidades para Alpine.js */
 [x-cloak] {
   display: none !important;
 }
-
+ 
 /*LIGHTBOX*/
 .lightbox-overlay {
   position: fixed;
@@ -352,7 +383,7 @@
   justify-content: center;
   padding: 1rem;
 }
-
+ 
 .lightbox-container {
   position: relative;
   display: grid;
@@ -365,7 +396,7 @@
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
-
+ 
 .lightbox-close {
   position: absolute;
   top: 0.75rem;
@@ -384,11 +415,11 @@
   justify-content: center;
   transition: background var(--transition-fast);
 }
-
+ 
 .lightbox-close:hover {
   background: rgba(239, 68, 68, 0.8);
 }
-
+ 
 /* Lado izquierdo — imagen */
 .lightbox-imagen {
   background: #000;
@@ -398,7 +429,7 @@
   min-height: 400px;
   max-height: 90vh;
 }
-
+ 
 .lightbox-img {
   width: 100%;
   height: 100%;
@@ -406,7 +437,7 @@
   object-fit: contain;
   display: block;
 }
-
+ 
 /* Lado derecho — panel */
 .lightbox-panel {
   display: flex;
@@ -415,7 +446,7 @@
   max-height: 90vh;
   overflow: hidden;
 }
-
+ 
 /* Autor */
 .lightbox-autor {
   display: flex;
@@ -425,36 +456,36 @@
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
-
+ 
 .lightbox-autor-nombre {
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--text-primary);
 }
-
+ 
 .lightbox-autor-fecha {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-
+ 
 .lightbox-autor .post-category {
   margin-left: auto;
 }
-
+ 
 /* Contenido */
 .lightbox-contenido {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
-
+ 
 .lightbox-titulo {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 0.5rem;
 }
-
+ 
 .lightbox-texto {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -465,7 +496,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
+ 
 /* Acciones */
 .lightbox-acciones {
   display: flex;
@@ -476,7 +507,7 @@
   flex-shrink: 0;
   flex-wrap: wrap;
 }
-
+ 
 /* Comentarios */
 .lightbox-comentarios {
   flex: 1;
@@ -485,7 +516,7 @@
   overflow: hidden;
   min-height: 0;
 }
-
+ 
 .lightbox-comentarios-lista {
   flex: 1;
   overflow-y: auto;
@@ -494,39 +525,39 @@
   flex-direction: column;
   gap: 0.875rem;
 }
-
+ 
 .lightbox-loading {
   padding: 1rem 1.25rem;
   color: var(--text-muted);
   font-size: 0.875rem;
   text-align: center;
 }
-
+ 
 .lightbox-sin-comentarios {
   color: var(--text-muted);
   font-size: 0.875rem;
   text-align: center;
   padding: 1rem 0;
 }
-
+ 
 .lightbox-comentario {
   display: flex;
   gap: 0.625rem;
   align-items: flex-start;
 }
-
+ 
 .lightbox-comentario-cuerpo {
   flex: 1;
   min-width: 0;
 }
-
+ 
 .lightbox-comentario-autor {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-primary);
   margin-right: 0.375rem;
 }
-
+ 
 .lightbox-comentario-texto {
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -534,7 +565,7 @@
   margin: 0.2rem 0 0;
   word-break: break-word;
 }
-
+ 
 /* Nuevo comentario */
 .lightbox-nuevo-comentario {
   display: flex;
@@ -545,14 +576,14 @@
   align-items: flex-start;
   background: var(--bg-tertiary);
 }
-
+ 
 .lightbox-input-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-
+ 
 .lightbox-textarea {
   width: 100%;
   background: var(--bg-elevated);
@@ -566,17 +597,17 @@
   line-height: 1.5;
   transition: border-color var(--transition-fast);
 }
-
+ 
 .lightbox-textarea:focus {
   outline: none;
   border-color: var(--accent-ocean);
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
-
+ 
 .lightbox-textarea::placeholder {
   color: var(--text-muted);
 }
-
+ 
 /* Responsive */
 @media (max-width: 768px) {
   .lightbox-container {
@@ -584,12 +615,12 @@
     grid-template-rows: 50vh 1fr;
     max-height: 95vh;
   }
-
+ 
   .lightbox-imagen {
     min-height: unset;
     max-height: 50vh;
   }
-
+ 
   .lightbox-panel {
     border-left: none;
     border-top: 1px solid var(--border-color);

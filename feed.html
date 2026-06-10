@@ -19,6 +19,26 @@
         .mobile-nav { display: flex !important; }
         .action-btn.active { color: #ef4444; }
         .action-btn.active span:first-child { filter: drop-shadow(0 0 4px rgba(239,68,68,0.5)); }
+ 
+        /* ── Lightbox: meta del comentario ── */
+        .lightbox-comentario-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+ 
+        /* ── Botones ✏️🗑️ en lightbox: ocultos hasta hover ── */
+        .lightbox-acciones-propias {
+            display: flex;
+            gap: 0.25rem;
+            margin-left: auto;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .lightbox-comentario:hover .lightbox-acciones-propias {
+            opacity: 1;
+        }
     </style>
 </head>
 <body x-data="feedApp()" x-cloak>
@@ -142,10 +162,10 @@
                                 <span x-text="post.liked ? '❤️' : '🤍'"></span>
                                 <span x-text="post.like_count || 0"></span>
                             </button>
-                            <button class="action-btn" @click="abrirLightbox(post)">
+                            <a :href="'post.html?id=' + post.id" class="action-btn">
                                 <span>💬</span>
                                 <span x-text="(post.comentarios_count || 0) + ' comentarios'"></span>
-                            </button>
+                            </a>
                             <button class="action-btn" @click="sharePost(post)">
                                 <span>🔗</span><span>Compartir</span>
                             </button>
@@ -366,7 +386,7 @@
                     <span x-text="(lightbox.comentarios?.length || 0) + ' comentarios'"></span>
                 </div>
                 <button class="action-btn" @click="sharePost(lightbox.post)"><span>🔗</span><span>Compartir</span></button>
-                <a :href="'post.html?id=' + lightbox.post?.id" class="action-btn"><span>↗</span><span>Ver post</span></a>
+                <a :href="'post.html?id=' + lightbox.post?.id" class="action-btn"><span>↗</span><span>Ver post completo</span></a>
             </div>
             <div class="lightbox-comentarios">
                 <template x-if="lightbox.loadingComentarios">
@@ -383,10 +403,10 @@
                                 <template x-if="!comentario.autor?.fotoPerfil"><span x-text="(comentario.autor?.nombre || '?').charAt(0).toUpperCase()"></span></template>
                             </div>
                             <div class="lightbox-comentario-cuerpo">
-                                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                <div class="lightbox-comentario-meta">
                                     <span class="lightbox-comentario-autor" x-text="comentario.autor?.nombre"></span>
                                     <template x-if="esPropioLightbox(comentario)">
-                                        <div style="display:flex; gap:0.25rem; margin-left:auto;">
+                                        <div class="lightbox-acciones-propias">
                                             <button class="btn-accion-comentario btn-editar" @click="editarComentarioLightbox(comentario)" title="Editar">✏️</button>
                                             <button class="btn-accion-comentario btn-eliminar" @click="eliminarComentarioLightbox(comentario)" title="Eliminar">🗑️</button>
                                         </div>
@@ -427,6 +447,30 @@
             </div>
         </div>
     </div>
+</div>
+ 
+<!-- ── BOTTOM NAV MÓVIL ───────────────────────────────────── -->
+<nav class="mobile-bottom-nav">
+    <a href="crear-post.html" class="mobile-bottom-nav-item mobile-bottom-nav-item--crear">
+        <span class="mobile-bottom-nav-icon">➕</span>
+        <span>Crear</span>
+    </a>
+    <a href="feed.html" class="mobile-bottom-nav-item active">
+        <span class="mobile-bottom-nav-icon">🏠</span>
+        <span>Feed</span>
+    </a>
+    <a href="perfil.html" class="mobile-bottom-nav-item">
+        <span class="mobile-bottom-nav-icon">👤</span>
+        <span>Perfil</span>
+    </a>
+</nav>
+ 
+<!-- ── TOASTS ─────────────────────────────────────────────── -->
+<div class="toast-container" x-data="{ toasts: [] }"
+    @toast.window="toasts.push($event.detail); setTimeout(() => toasts.shift(), 3000)">
+    <template x-for="toast in toasts" :key="toast.message">
+        <div class="toast" :class="toast.type" x-text="toast.message"></div>
+    </template>
 </div>
  
 <script src="js/config.js"></script>

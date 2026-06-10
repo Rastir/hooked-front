@@ -144,6 +144,9 @@ Página principal después del login. Muestra los posts de todos los usuarios co
 - Estado vacío si no hay posts
 - Botón de compartir (usa Web Share API o copia al portapapeles)
 - Navegación mobile con barra inferior fija
+- Navegación con barra inferior fija permanente (visible en todos los tamaños de pantalla)
+- Click en imagen abre lightbox con imagen completa y panel lateral
+- Click en "Comentarios" navega directo a `post.html`
  
 **Sidebar (solo desktop ≥ 1024px):**
 - Muestra nombre y email del usuario logueado
@@ -388,6 +391,8 @@ Componente Alpine `feedApp`. Es el módulo más complejo del frontend.
 | `filterByCategory(catId)` | Resetea paginación y recarga con nueva categoría |
 | `formatDate(dateString)` | Convierte fecha ISO a texto relativo ("Hace 2 h") |
 | `sharePost(post)` | Web Share API con fallback a clipboard |
+| `abrirLightbox(post)` | Abre lightbox con imagen completa + bloquea scroll del body |
+| `cerrarLightbox()` | Cierra lightbox y restaura scroll del body |
  
 ---
  
@@ -480,7 +485,7 @@ npx serve .
 | Toggle de likes | ✅ Completo | Optimistic UI + sincronización con backend |
 | Crear post | ✅ Completo | Con upload de imagen a Cloudinary |
 | Sidebar de categorías | ✅ Completo | Solo visible en desktop |
-| Mobile nav | ✅ Completo | Barra inferior en móvil |
+| Mobile nav | ✅ Completo | Barra inferior permanente con Crear, Feed y Perfil |
 | Sistema de toasts | ✅ Completo | Éxito, error e info |
 | Skeletons de carga | ✅ Completo | En el feed mientras cargan posts |
 | Compartir post | ✅ Completo | Web Share API + fallback a clipboard |
@@ -492,7 +497,7 @@ npx serve .
 | Badges placeholder | ✅ Completo | 6 espacios visuales listos para implementación |
 | Header unificado | ✅ Completo | Todos los headers usan las mismas clases CSS |
 | Foto de perfil en posts y comentarios | ✅ Completo | Autor visible en feed, post.html y lightbox |
-| Lightbox de imágenes | ✅ Completo | Desde el feed: imagen completa + panel con likes, comentarios y compartir |
+| Lightbox de imágenes | ✅ Completo | Solo por click en imagen; click en "Comentarios" navega a post.html |
 | Editar/Eliminar comentarios desde lightbox | ✅ Completo | Solo comentarios propios |
 | Editar perfil funcional | ✅ Completo | PUT corregido, campos alineados con backend, foto via Cloudinary |
 | Light mode completo     | ✅ Completo | Paleta revisada en todas las páginas, toggle en todas las vistas incluyendo login 
@@ -510,12 +515,15 @@ npx serve .
 | Modal de confirmación unificado | ✅ Fixed | `post.js`, `post.html` |
 | `feed.html` / `feed.js` | Feed principal | ✅ Completada |
 | Buscador global (modal) | Búsqueda de posts y personas en tiempo real | ✅ Completada |
+| Unfollow con confirmación | ✅ Completo | `Utils.confirm()` antes de `DELETE /seguir`, mensaje distinto si son Fishing Buddies |
+| Botones editar/eliminar en lightbox | ✅ Completo | Ocultos por default, visibles en hover sobre el comentario |
+| Scroll lock en lightbox | ✅ Fixed | `overflow: hidden` en body al abrir, restaurado al cerrar |
+| Barra inferior de navegación permanente | ✅ Completo | Crear / Feed / Perfil, visible en todos los tamaños de pantalla |
 
 ### Pendientes 🚧
  
 | Feature | Prioridad | Notas |
 |---------|-----------|-------|
-| Editar comentario       | 🟡 Media | HTML preparado, falta abrirEdicion() en post.js |
 | Spots de pesca          | 🟡 Media | Búsqueda con integración a mapas  |
 | Tiendas                 | 🟡 Media  | Perfil de tienda + búsqueda |
 | Notificaciones | 🟢 Baja | Requiere WebSocket en el backend |
@@ -527,6 +535,9 @@ npx serve .
 | Backend  | Tipos de cuenta diferenciados: `USUARIO` / `TIENDA`          | Alta      |
 | Backend  | Entidad `Spot` con campos de geolocalización (lat, lng, nombre, descripción) | Media |
 | Frontend | Integración de Google Maps / Leaflet para tab de Spots       | Media     |
+| Frontend | Mover estilos y HTML de `bottom-nav` a `components.css` y propagarlo a `perfil.html` y `post.html` | Media |
+| Frontend | Renombrar clase `mobile-bottom-nav` → `bottom-nav` en CSS y HTML | Baja |
+| Frontend | Header libre para integrar herramientas de pesca (clima, mareas, spots cercanos) | Baja |
  
 ---
  
