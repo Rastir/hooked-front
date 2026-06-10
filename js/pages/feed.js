@@ -231,6 +231,7 @@ document.addEventListener('alpine:init', () => {
       this.lightbox.post = post;
       this.lightbox.comentarios = [];
       this.lightbox.nuevoComentario = '';
+      document.body.style.overflow = 'hidden'; // bloquea scroll del feed
       await this._cargarComentariosLightbox(post.id);
     },
  
@@ -239,6 +240,7 @@ document.addEventListener('alpine:init', () => {
       this.lightbox.post = null;
       this.lightbox.comentarios = [];
       this.lightbox.nuevoComentario = '';
+      document.body.style.overflow = ''; // restaura scroll del feed
     },
  
     async _cargarComentariosLightbox(postId) {

@@ -7,6 +7,60 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ## [Unreleased]## 
 
+### Pending (deuda técnica registrada)
+- `feed.html` / `perfil.html` / `post.html` — Barra inferior de navegación
+  actualmente solo vive en `feed.css` y `feed.html`. Mover estilos a
+  `components.css` y agregar el `<nav>` a `perfil.html` y `post.html`
+  para que la navegación sea consistente en toda la app.
+- `feed.css` / `feed.html` — La clase `mobile-bottom-nav` ya no describe
+  bien su función (la barra es permanente, no solo móvil). Renombrar a
+  `bottom-nav` en un refactor futuro.
+- `feed.html` — El header queda libre para integrar herramientas de pesca
+  (calculadoras de marea, clima, spots cercanos, etc.) — diseño pendiente.
+- `feed.html` / `post.html` — Lightbox: verificar que el hover de botones
+  ✏️🗑️ también funciona en comentarios de nivel 2 (respuestas).
+- `post.html` / `post.js` — Verificar en pruebas reales que el flujo completo
+  de edición de comentario funciona de extremo a extremo (abrir → editar → guardar).
+- `feed.html` — Confirmar que `crear-post.html` existe y está funcional,
+  ya que el botón "Crear" de la barra inferior apunta a esa ruta.
+- General — Spots y Tiendas siguen como placeholders en el buscador global.
+  Requieren trabajo de backend + mapas antes de poder implementarse.
+
+---
+
+## [0.13.0] — 2026-06-10
+
+### Added
+- `perfil.js` — `toggleSeguir()`: confirmación obligatoria antes de hacer
+  unfollow vía `Utils.confirm()`. El mensaje varía según contexto: si son
+  Fishing Buddies avisa que perderán ese estado; si no, mensaje genérico.
+  Solo ejecuta el `DELETE /seguir` si el usuario confirma.
+- `feed.html` / `feed.css` — Botones ✏️🗑️ en comentarios del lightbox
+  ocultos por default (`opacity: 0`), visibles solo en hover sobre el
+  comentario padre (`.lightbox-comentario:hover .lightbox-acciones-propias`).
+- `feed.html` / `feed.css` — Barra de navegación inferior permanente con
+  3 botones: Crear (izquierda) · Feed (centro, activo) · Perfil (derecha).
+  Visible en todos los tamaños de pantalla. Botón Crear con ícono circular
+  en `--accent-ocean`. Reemplaza el FAB anterior.
+
+### Changed
+- `feed.html` — Botón "💬 comentarios" cambiado de `abrirLightbox(post)` a
+  `<a href="post.html?id=...">`. Navega directo al detalle del post.
+  El lightbox queda exclusivo para click en imagen.
+- `feed.html` — Botón "Ver post" dentro del lightbox renombrado a
+  "Ver post completo".
+- `feed.css` — Bloque `.fab` eliminado y reemplazado por `.mobile-bottom-nav`.
+  `pb-safe` aplica siempre (sin media query).
+
+### Fixed
+- `feed.js` — `abrirLightbox()` bloquea scroll del body con
+  `document.body.style.overflow = 'hidden'`; `cerrarLightbox()` lo restaura.
+  El feed ya no hace scroll mientras el lightbox está abierto.
+
+### Removed
+- `feed.html` — Botón flotante FAB (➕) eliminado; reemplazado por la barra
+  inferior de navegación.
+
 ## [0.12.0] — 2026-06-02
 
 ### Added

@@ -9,7 +9,7 @@
  * - Si hay id pero es el TUYO, igual lo trata como perfil propio
  * - Si es un id DIFERENTE al tuyo, muestra el perfil ajeno
  */
-
+ 
 function perfilApp() {
   return {
     // ── Estado general ──────────────────────────────────────
@@ -17,7 +17,7 @@ function perfilApp() {
     error: null,
     usuario: null,
     esPropioUsuario: false,
-
+ 
     // ── Posts ───────────────────────────────────────────────
     posts: [],
     loadingPosts: false,
@@ -25,24 +25,24 @@ function perfilApp() {
     hayMasPosts: false,
     paginaActual: 0,
     TAMANO_PAGINA: 8,
-
+ 
     // ── Tabs ────────────────────────────────────────────────
     tabActivo: 'posts',
-
+ 
     // ── Capturas especiales y récords ───────────────────────
     topCapturas: [],   // Posts con imagen ordenados por likes
     records: [],       // Récords por especie (calculados del backend)
-
+ 
     // ── Seguir ──────────────────────────────────────────────
     siguiendo: false,
-
+ 
     // ── Seguidores/siguiendo ─────────────────────────
     esFishingBuddy: false,
     modalSeguidores: false,
     modalSiguiendo: false,
     seguidoresList: [],
     siguiendoList: [],
-
+ 
     // ── Modal edición ───────────────────────────────────────
     modalEdicion: false,
     guardando: false,
@@ -65,7 +65,7 @@ function perfilApp() {
       fotoPerfil: '',
       tagsRaw: '',   // tags como texto "trucha, mar, mosca"
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // INIT — punto de entrada, lo primero que corre Alpine
     // ────────────────────────────────────────────────────────
@@ -75,24 +75,24 @@ function perfilApp() {
       if (typeof checkAuth === 'function') {
         checkAuth(); // redirige a index.html si no hay sesión
       }
-
+ 
       // 2. Leer el ?id= de la URL
       //    Ejemplo: perfil.html?id=42  → idObjetivo = 42
       //             perfil.html        → idObjetivo = null (mi perfil)
       const params = new URLSearchParams(window.location.search);
       const idObjetivo = params.get('id');
-
+ 
       // 3. Obtener el usuario logueado desde localStorage
       const usuarioLogueado = this._getUsuarioLogueado();
-
+ 
       await this._cargarCategorias();
-
+ 
       if (!usuarioLogueado) {
         this.error = 'No se encontró sesión activa.';
         this.loading = false;
         return;
       }
-
+ 
       // 4. Decidir qué perfil cargar
       //
       // El problema: el localStorage solo guarda { email, nombre }
@@ -105,7 +105,7 @@ function perfilApp() {
       //
       // Para saber si el perfil ajeno es en realidad el nuestro,
       // comparamos el email que devuelve la API con el del localStorage.
-
+ 
       if (!idObjetivo) {
         // Mi propio perfil: cargamos por email
         this.esPropioUsuario = true;
@@ -120,7 +120,7 @@ function perfilApp() {
         }
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // CARGAR PERFIL PROPIO (sin id, usando el token JWT)
     // Usa GET /api/usuarios/yo — el backend lo identifica
@@ -130,17 +130,17 @@ function perfilApp() {
       try {
         this.loading = true;
         this.error = null;
-
+ 
         // GET /api/usuarios/yo → devuelve el perfil del usuario logueado
         // El backend lo saca del JWT, no del id de la URL
         const data = await api.get(`${CONFIG.ENDPOINTS.USUARIOS}/perfil?_t=${Date.now()}`);
         this.usuario = data;
-
+ 
         // Posts propios: usamos /mis-posts que también usa el JWT
         await this._cargarMisPosts();
         this._calcularRecords();
         this._calcularTopCapturas();
-
+ 
       } catch (err) {
         console.error('Error cargando perfil propio:', err);
         // Si /yo no existe en el backend, intentamos buscar por email
@@ -160,7 +160,7 @@ function perfilApp() {
         this.loading = false;
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // CARGAR PERFIL AJENO desde la API
     // ────────────────────────────────────────────────────────
@@ -168,13 +168,13 @@ function perfilApp() {
       try {
         this.loading = true;
         this.error = null;
-
+ 
         // GET /api/usuarios/{id}
         const data = await api.get(
           `${CONFIG.ENDPOINTS.USUARIOS}/${idUsuario}`
         );
         this.usuario = data;
-
+ 
         await this._cargarPosts(idUsuario);
         this._calcularRecords();
         this._calcularTopCapturas();
@@ -187,7 +187,7 @@ function perfilApp() {
         this.loading = false;
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // CARGAR MIS POSTS (perfil propio)
     // Usa GET /api/posts/mis-posts — el backend los filtra
@@ -197,14 +197,14 @@ function perfilApp() {
       try {
         this.loadingPosts = true;
         this.paginaActual = 0;
-
+ 
         // Este endpoint devuelve List<PostResponse> sin paginar
         const respuesta = await api.get(`${CONFIG.ENDPOINTS.POSTS}/mis-posts?_t=${Date.now()}`);
-
+ 
         // /mis-posts devuelve un array directo, no PaginatedResponse
         this.posts = Array.isArray(respuesta) ? respuesta : [];
         this.hayMasPosts = false; // sin paginación por ahora
-
+ 
       } catch (err) {
         console.error('Error cargando mis posts:', err);
         this.posts = [];
@@ -212,7 +212,7 @@ function perfilApp() {
         this.loadingPosts = false;
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // CARGAR POSTS de un usuario ajeno (por id)
     // Usa GET /api/posts/usuario/{id} — el endpoint correcto
@@ -221,15 +221,15 @@ function perfilApp() {
       try {
         this.loadingPosts = true;
         this.paginaActual = 0;
-
+ 
         // GET /api/posts/usuario/{id}?pagina=0&tamano=8
         const respuesta = await api.get(
           `${CONFIG.ENDPOINTS.POSTS}/usuario/${idUsuario}?pagina=0&tamano=${this.TAMANO_PAGINA}&_t=${Date.now()}`
         );
-
+ 
         this.posts = respuesta.contenido || respuesta.content || [];
         this.hayMasPosts = !respuesta.ultima && !respuesta.last;
-
+ 
       } catch (err) {
         console.error('Error cargando posts:', err);
         this.posts = [];
@@ -237,33 +237,33 @@ function perfilApp() {
         this.loadingPosts = false;
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // CARGAR MÁS POSTS (paginación — solo perfil ajeno)
     // ────────────────────────────────────────────────────────
     async cargarMasPosts() {
       if (this.loadingMore || !this.hayMasPosts) return;
-
+ 
       try {
         this.loadingMore = true;
         this.paginaActual++;
-
+ 
         const idUsuario = this.usuario.id;
         const respuesta = await api.get(
           `${CONFIG.ENDPOINTS.POSTS}/usuario/${idUsuario}?pagina=${this.paginaActual}&tamano=${this.TAMANO_PAGINA}&_t=${Date.now()}`
         );
-
+ 
         const nuevos = respuesta.contenido || respuesta.content || [];
         this.posts = [...this.posts, ...nuevos];
         this.hayMasPosts = !respuesta.ultima && !respuesta.last;
-
+ 
       } catch (err) {
         console.error('Error cargando más posts:', err);
       } finally {
         this.loadingMore = false;
       }
     },
-
+ 
     // ── CARGAR CATEGORÍAS ──
     async _cargarCategorias() {
       try {
@@ -272,7 +272,7 @@ function perfilApp() {
         console.error('Error cargando categorías:', err);
       }
     },
-
+ 
     // ── ABRIR MODAL EDICIÓN POST ──
     // Es como abrir un cajón con los datos actuales ya cargados
     abrirEdicionPost(post) {
@@ -287,13 +287,13 @@ function perfilApp() {
       this._archivoFotoPost = null;
       this.modalEdicionPost = true;
     },
-
+ 
     cerrarEdicionPost() {
       this.modalEdicionPost = false;
       this.postEnEdicion = null;
       this._archivoFotoPost = null;
     },
-
+ 
     // Preview de imagen nueva antes de subir
     onEditPostFotoChange(event) {
       const archivo = event.target.files[0];
@@ -307,7 +307,7 @@ function perfilApp() {
       reader.readAsDataURL(archivo);
       this._archivoFotoPost = archivo;
     },
-
+ 
     // ── GUARDAR EDICIÓN POST ──
     async guardarEdicionPost() {
       if (this.guardandoPost || !this.postEnEdicion) return;
@@ -319,7 +319,7 @@ function perfilApp() {
         this._toast('Selecciona una categoría', 'error');
         return;
       }
-
+ 
       const ok = await Utils.confirm({
         icono: '✏️',
         titulo: '¿Guardar cambios?',
@@ -328,38 +328,38 @@ function perfilApp() {
         btnCancel: 'Cancelar',
       });
       if (!ok) return;
-
+ 
       try {
         this.guardandoPost = true;
-
+ 
         // Si hay imagen nueva, subirla primero a Cloudinary
         let fotoLink = this.editPostForm.fotoLink;
         if (this._archivoFotoPost) {
           fotoLink = await this._subirFotoCloudinary(this._archivoFotoPost);
           this._archivoFotoPost = null;
         }
-
+ 
         const body = {
           titulo: this.editPostForm.titulo.trim(),
           contenido: this.editPostForm.contenido.trim(),
           categoriaId: parseInt(this.editPostForm.categoriaId),
           fotoLink: fotoLink || null,
         };
-
+ 
         const actualizado = await api.put(
           `${CONFIG.ENDPOINTS.POSTS}/${this.postEnEdicion.id}`,
           body
         );
-
+ 
         // Actualizar el post en el array local sin recargar todo
         const idx = this.posts.findIndex(p => p.id === this.postEnEdicion.id);
         if (idx !== -1) {
           this.posts[idx] = { ...this.posts[idx], ...actualizado };
         }
-
+ 
         this.cerrarEdicionPost();
         this._toast('Post actualizado ✅', 'success');
-
+ 
       } catch (err) {
         console.error('Error guardando post:', err);
         this._toast(err.message || 'No se pudo guardar el post', 'error');
@@ -367,7 +367,7 @@ function perfilApp() {
         this.guardandoPost = false;
       }
     },
-
+ 
     // ── ELIMINAR POST ──
     // El confirm() es como preguntarle al usuario "¿estás seguro?"
     // antes de tirar algo a la basura
@@ -381,26 +381,26 @@ function perfilApp() {
         peligro: true,
       });
       if (!ok) return;
-
+ 
       try {
         await api.delete(`${CONFIG.ENDPOINTS.POSTS}/${post.id}`);
-
+ 
         // Quitar del array local
         this.posts = this.posts.filter(p => p.id !== post.id);
-
+ 
         // Actualizar contador de stats
         if (this.usuario && this.usuario.totalPosts > 0) {
           this.usuario.totalPosts--;
         }
-
+ 
         this._toast('Post eliminado 🗑️', 'info');
-
+ 
       } catch (err) {
         console.error('Error eliminando post:', err);
         this._toast(err.message || 'No se pudo eliminar el post', 'error');
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // CALCULAR TOP CAPTURAS
     // Son los posts que tienen foto, ordenados por likeCount
@@ -411,7 +411,7 @@ function perfilApp() {
         .sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
         .slice(0, 12); // máximo 12 en el grid
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // CALCULAR RÉCORDS
     // El backend no tiene endpoint de récords por especie todavía,
@@ -422,15 +422,15 @@ function perfilApp() {
       // Regex que busca patrones tipo "trucha 2.3 kg" o "robalo: 5kg"
       const regex = /([a-záéíóúñ]+)[:\s]+(\d+(?:\.\d+)?)\s*kg/gi;
       const mapa = {}; // { especie: { pesoMaximo, fechaMejorCaptura } }
-
+ 
       for (const post of this.posts) {
         const texto = `${post.titulo || ''} ${post.contenido || ''}`;
         let match;
-
+ 
         while ((match = regex.exec(texto)) !== null) {
           const especie = this._capitalizar(match[1]);
           const peso = parseFloat(match[2]);
-
+ 
           if (!mapa[especie] || peso > mapa[especie].pesoMaximo) {
             mapa[especie] = {
               especie,
@@ -440,13 +440,13 @@ function perfilApp() {
           }
         }
       }
-
+ 
       // Ordenar por peso descendente y tomar top 5
       this.records = Object.values(mapa)
         .sort((a, b) => b.pesoMaximo - a.pesoMaximo)
         .slice(0, 5);
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // TOGGLE LIKE en posts del perfil
     // Igual que en feed.js: Optimistic UI primero, luego API
@@ -457,10 +457,10 @@ function perfilApp() {
       // de inmediato aunque el servidor tarde un poco
       const antesLiked = post.likedByCurrentUser;
       const antesCount = post.likeCount || 0;
-
+ 
       post.likedByCurrentUser = !antesLiked;
       post.likeCount = antesLiked ? antesCount - 1 : antesCount + 1;
-
+ 
       try {
         const resp = await api.post(
           `${CONFIG.ENDPOINTS.POSTS}/${post.id}/like`
@@ -475,7 +475,7 @@ function perfilApp() {
         this._toast('No se pudo registrar el like', 'error');
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // COMPARTIR post (igual que en feed.js)
     // ────────────────────────────────────────────────────────
@@ -490,7 +490,7 @@ function perfilApp() {
         this._toast('¡Enlace copiado al portapapeles! 🔗', 'success');
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // TOGGLE SEGUIR (perfil ajeno)
     // Por ahora hace toggle local. Cuando el backend tenga
@@ -498,7 +498,25 @@ function perfilApp() {
     // ────────────────────────────────────────────────────────
     async toggleSeguir() {
       if (!this.usuario) return;
-
+ 
+      // Si ya sigues al usuario, pedimos confirmación antes de hacer unfollow.
+      // Es como cuando Instagram te pregunta "¿Dejar de seguir?" — evita
+      // que un click accidental rompa una conexión.
+      if (this.siguiendo) {
+        const esBuddy = this.esFishingBuddy;
+        const ok = await Utils.confirm({
+          icono: esBuddy ? '🎣' : '👤',
+          titulo: `¿Dejar de seguir a ${this.usuario.nombre}?`,
+          mensaje: esBuddy
+            ? 'Dejarán de ser Fishing Buddies. Puedes volver a seguirle cuando quieras.'
+            : 'Dejarás de ver sus publicaciones en tu feed. Puedes volver a seguirle cuando quieras.',
+          btnOk: 'Dejar de seguir',
+          btnCancel: 'Cancelar',
+          peligro: true,
+        });
+        if (!ok) return;
+      }
+ 
       try {
         if (this.siguiendo) {
           await api.delete(`${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguir`);
@@ -521,7 +539,7 @@ function perfilApp() {
         this._toast(err.message || 'No se pudo procesar', 'error');
       }
     },
-
+ 
     // Aquí es donde verificamos si el usuario logueado ya sigue al perfil que estamos viendo
     async _cargarEstadoFollow() {
       if (this.esPropioUsuario || !this.usuario) return;
@@ -530,7 +548,7 @@ function perfilApp() {
           `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/es-seguidor?_t=${Date.now()}`
         );
         this.siguiendo = sigue === true;
-
+ 
         if (this.siguiendo) {
           const seguidores = await api.get(
             `${CONFIG.ENDPOINTS.USUARIOS}/${this.usuario.id}/seguidores?_t=${Date.now()}`
@@ -545,7 +563,7 @@ function perfilApp() {
         console.error('Error cargando estado follow:', err);
       }
     },
-
+ 
     async _cargarContadoresFollow() {
       if (!this.usuario) return;
       try {
@@ -560,7 +578,7 @@ function perfilApp() {
         console.error('Error cargando contadores:', err);
       }
     },
-
+ 
     async abrirSeguidores() {
       try {
         this.seguidoresList = await api.get(
@@ -571,7 +589,7 @@ function perfilApp() {
         this._toast('No se pudieron cargar los seguidores', 'error');
       }
     },
-
+ 
     async abrirSiguiendo() {
       try {
         this.siguiendoList = await api.get(
@@ -582,7 +600,7 @@ function perfilApp() {
         this._toast('No se pudo cargar la lista de siguiendo', 'error');
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // MODAL EDITAR PERFIL
     // ────────────────────────────────────────────────────────
@@ -597,43 +615,43 @@ function perfilApp() {
       };
       this.modalEdicion = true;
     },
-
+ 
     cerrarEdicion() {
       this.modalEdicion = false;
     },
-
+ 
     // Preview de foto nueva antes de subir
     onFotoChange(event) {
       const archivo = event.target.files[0];
       if (!archivo) return;
-
+ 
       if (archivo.size > 5 * 1024 * 1024) {
         this._toast('La imagen no puede pesar más de 5MB', 'error');
         return;
       }
-
+ 
       // Mostramos preview local inmediato
       const reader = new FileReader();
       reader.onload = (e) => { this.editForm.fotoPerfil = e.target.result; };
       reader.readAsDataURL(archivo);
-
+ 
       // Guardamos el archivo para subir luego
       this._archivoFoto = archivo;
     },
-
+ 
     async guardarPerfil() {
       if (this.guardando) return;
-
+ 
       try {
         this.guardando = true;
-
+ 
         // Si hay foto nueva, la subimos primero a Cloudinary
         let fotoUrl = this.editForm.fotoPerfil;
         if (this._archivoFoto) {
           fotoUrl = await this._subirFotoCloudinary(this._archivoFoto);
           this._archivoFoto = null;
         }
-
+ 
         // Construimos el body para PUT /api/usuarios/{id}
         const fotoOriginal = this.usuario.fotoPerfil || '';
         const body = {
@@ -646,15 +664,15 @@ function perfilApp() {
             .filter(t => t.length > 0),
           ...(fotoUrl !== fotoOriginal && fotoUrl ? { fotoPerfil: fotoUrl } : {})
         };
-
+ 
         const actualizado = await api.put(
           `${CONFIG.ENDPOINTS.USUARIOS}/perfil`,
           body
         );
-
+ 
         // Actualizamos el estado local con la respuesta del servidor
         this.usuario = { ...this.usuario, ...actualizado };
-
+ 
         // Actualizamos también el localStorage para que el header
         // y otros componentes vean el nombre/foto nuevos
         const usuarioLogueado = this._getUsuarioLogueado();
@@ -664,10 +682,10 @@ function perfilApp() {
             JSON.stringify({ ...usuarioLogueado, ...actualizado })
           );
         }
-
+ 
         this.cerrarEdicion();
         this._toast('Perfil actualizado ✅', 'success');
-
+ 
       } catch (err) {
         console.error('Error guardando perfil:', err);
         this._toast(err.message || 'No se pudo guardar el perfil', 'error');
@@ -675,7 +693,7 @@ function perfilApp() {
         this.guardando = false;
       }
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // SUBIR FOTO A CLOUDINARY (igual que en create-post.js)
     // ────────────────────────────────────────────────────────
@@ -683,21 +701,21 @@ function perfilApp() {
       const formData = new FormData();
       formData.append('file', archivo);
       formData.append('upload_preset', CONFIG.CLOUDINARY.UPLOAD_PRESET);
-
+ 
       const resp = await fetch(
         `https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY.CLOUD_NAME}/image/upload`,
         { method: 'POST', body: formData }
       );
-
+ 
       if (!resp.ok) throw new Error('Error al subir la imagen');
       const data = await resp.json();
       return data.secure_url;
     },
-
+ 
     // ────────────────────────────────────────────────────────
     // UTILIDADES
     // ────────────────────────────────────────────────────────
-
+ 
     // Leer usuario logueado desde localStorage
     _getUsuarioLogueado() {
       try {
@@ -707,58 +725,58 @@ function perfilApp() {
         return null;
       }
     },
-
+ 
     // Clase CSS según el nivel del pescador
     nivelClass(nivel) {
       if (!nivel) return 'principiante';
       return nivel.toLowerCase();
     },
-
+ 
     // Cuántos días lleva conectado el pelado
     diasActivo() {
       return this.usuario?.rachaActual || 0;
     },
-
+ 
     // Formato de número: 1200 → "1.2k"
     formatNum(num) {
       if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M';
       if (num >= 1_000) return (num / 1_000).toFixed(1) + 'k';
       return String(num);
     },
-
+ 
     // Formato de fecha relativa: "Hace 2 horas", "3 días"
     formatFecha(fechaISO) {
       if (!fechaISO) return '';
       const fecha = new Date(fechaISO);
       const ahora = new Date();
       const diff = Math.floor((ahora - fecha) / 1000); // en segundos
-
+ 
       if (diff < 60) return 'Hace un momento';
       if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
       if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
       if (diff < 2592000) return `Hace ${Math.floor(diff / 86400)} días`;
-
+ 
       return fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
     },
-
+ 
     // Truncar texto largo
     truncar(texto, max) {
       if (!texto) return '';
       return texto.length > max ? texto.slice(0, max) + '…' : texto;
     },
-
+ 
     // Capitalizar primera letra
     _capitalizar(str) {
       return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     },
-
+ 
     // Emitir toast igual que en el resto del proyecto
     _toast(mensaje, tipo = 'info') {
       window.dispatchEvent(new CustomEvent('toast', {
         detail: { mensaje, tipo }
       }));
     },
-
+ 
     // Logout — delega a auth.js
     logout() {
       if (typeof logout === 'function') {
@@ -770,4 +788,3 @@ function perfilApp() {
     },
   };
 }
- 
