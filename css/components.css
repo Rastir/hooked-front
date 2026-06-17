@@ -314,3 +314,139 @@
   gap: 10px;
   margin-top: 8px;
 }
+
+/* ── Bottom nav (Crear / Feed / Perfil) ─────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3.75rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  z-index: 100;
+  display: flex;
+  align-items: stretch;
+  backdrop-filter: blur(8px);
+}
+ 
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: color 0.15s ease;
+  padding: 0.25rem 0;
+}
+ 
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+  color: var(--accent-ocean);
+}
+ 
+.bottom-nav-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+ 
+/* Botón central de Crear — destacado con color */
+.bottom-nav-item--crear {
+  color: var(--accent-ocean);
+}
+ 
+.bottom-nav-item--crear .bottom-nav-icon {
+  background: var(--accent-ocean);
+  color: white;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
+}
+ 
+/* Espacio en el fondo para que el último post
+   no quede escondido detrás de la barra */
+.pb-safe {
+  padding-bottom: calc(3.75rem + 1rem) !important;
+}
+
+/* ── Bottom nav (Crear / Feed / Perfil) ─────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3.75rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  z-index: 100;
+  display: flex;
+  align-items: stretch;
+  backdrop-filter: blur(8px);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: color 0.15s ease;
+  padding: 0.25rem 0;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+  color: var(--accent-ocean);
+}
+
+.bottom-nav-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.bottom-nav-item--crear {
+  color: var(--accent-ocean);
+}
+
+.bottom-nav-item--crear .bottom-nav-icon {
+  background: var(--accent-ocean);
+  color: white;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
+}
+
+.pb-safe {
+  padding-bottom: calc(3.75rem + 1rem) !important;
+}
+
+/* ── Alpine cloak ── */
+[x-cloak] { display: none !important; }

@@ -501,12 +501,21 @@
  
   </main>
 
-  <!-- ── MOBILE NAV ─────────────────────────────────────────── -->
-  <nav class="mobile-nav">
-    <a href="feed.html" class="mobile-nav-link">🏠<span>Inicio</span></a>
-    <a href="crear-post.html" class="mobile-nav-link">➕<span>Crear</span></a>
-    <a href="perfil.html" class="mobile-nav-link active">👤<span>Perfil</span></a>
-  </nav>
+  <!-- ── BOTTOM NAV ───────────────────────────────────────────── -->
+<nav class="bottom-nav">
+    <a href="crear-post.html" class="bottom-nav-item bottom-nav-item--crear">
+        <span class="bottom-nav-icon">➕</span>
+        <span>Crear</span>
+    </a>
+    <a href="feed.html" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🏠</span>
+        <span>Feed</span>
+    </a>
+    <a href="perfil.html" class="bottom-nav-item">
+        <span class="bottom-nav-icon">👤</span>
+        <span>Perfil</span>
+    </a>
+</nav>
 
   <!-- ── TOASTS ─────────────────────────────────────────────── -->
   <div class="toast-container" x-data="{ toasts: [] }"

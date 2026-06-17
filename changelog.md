@@ -8,13 +8,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 ## [Unreleased]## 
 
 ### Pending (deuda técnica registrada)
-- `feed.html` / `perfil.html` / `post.html` — Barra inferior de navegación
-  actualmente solo vive en `feed.css` y `feed.html`. Mover estilos a
-  `components.css` y agregar el `<nav>` a `perfil.html` y `post.html`
-  para que la navegación sea consistente en toda la app.
-- `feed.css` / `feed.html` — La clase `mobile-bottom-nav` ya no describe
-  bien su función (la barra es permanente, no solo móvil). Renombrar a
-  `bottom-nav` en un refactor futuro.
 - `feed.html` — El header queda libre para integrar herramientas de pesca
   (calculadoras de marea, clima, spots cercanos, etc.) — diseño pendiente.
 - `feed.html` / `post.html` — Lightbox: verificar que el hover de botones
@@ -25,6 +18,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
   ya que el botón "Crear" de la barra inferior apunta a esa ruta.
 - General — Spots y Tiendas siguen como placeholders en el buscador global.
   Requieren trabajo de backend + mapas antes de poder implementarse.
+
+## [0.14.0] — 2026-06-17
+
+### Added
+- `perfil.html` / `post.html` — Barra de navegación inferior (`bottom-nav`)
+  propagada a ambas páginas. `perfil.html` marca como activo el ítem Perfil;
+  `post.html` no marca ninguno por no ser una sección del nav.
+
+### Changed
+- `components.css` — Estilos de `bottom-nav`, `bottom-nav-item`,
+  `bottom-nav-icon`, `bottom-nav-item--crear` y `pb-safe` movidos desde
+  `feed.css` para que estén disponibles globalmente.
+- `components.css` — Regla `[x-cloak]` movida desde el bloque `<style>`
+  inline de `feed.html` a `components.css`.
+- `feed.html` — Bloque `<style>` inline reducido: eliminadas las reglas
+  ya migradas a `components.css`.
+
+### Removed
+- `feed.html` — Botón "↗ Ver post" del pie de cada post card eliminado
+  por ser redundante con el botón "💬 comentarios" que navega al mismo destino.
+
+### Renamed
+- `feed.html` / `feed.css` — Clase `mobile-bottom-nav` renombrada a
+  `bottom-nav` (y variantes: `mobile-bottom-nav-item` → `bottom-nav-item`,
+  `mobile-bottom-nav-icon` → `bottom-nav-icon`) para reflejar que la barra
+  es permanente en todos los tamaños de pantalla.
 
 ---
 
