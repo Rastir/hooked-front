@@ -519,6 +519,8 @@ npx serve .
 | Botones editar/eliminar en lightbox | ✅ Completo | Ocultos por default, visibles en hover sobre el comentario |
 | Scroll lock en lightbox | ✅ Fixed | `overflow: hidden` en body al abrir, restaurado al cerrar |
 | Barra inferior de navegación permanente | ✅ Completo | Crear / Feed / Perfil, visible en todos los tamaños de pantalla |
+| Bottom nav en perfil y post | ✅ Completo | `bottom-nav` propagada a `perfil.html` y `post.html` via `components.css` |
+| Refactor clase `bottom-nav` | ✅ Completo | Renombrada desde `mobile-bottom-nav`; estilos y `[x-cloak]` migrados a `components.css` |
 
 ### Pendientes 🚧
  
@@ -535,8 +537,6 @@ npx serve .
 | Backend  | Tipos de cuenta diferenciados: `USUARIO` / `TIENDA`          | Alta      |
 | Backend  | Entidad `Spot` con campos de geolocalización (lat, lng, nombre, descripción) | Media |
 | Frontend | Integración de Google Maps / Leaflet para tab de Spots       | Media     |
-| Frontend | Mover estilos y HTML de `bottom-nav` a `components.css` y propagarlo a `perfil.html` y `post.html` | Media |
-| Frontend | Renombrar clase `mobile-bottom-nav` → `bottom-nav` en CSS y HTML | Baja |
 | Frontend | Header libre para integrar herramientas de pesca (clima, mareas, spots cercanos) | Baja |
  
 ---

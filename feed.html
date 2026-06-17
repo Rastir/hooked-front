@@ -169,9 +169,6 @@
                             <button class="action-btn" @click="sharePost(post)">
                                 <span>🔗</span><span>Compartir</span>
                             </button>
-                            <a :href="'post.html?id=' + post.id" class="action-btn">
-                                <span>↗</span><span>Ver post</span>
-                            </a>
                         </div>
                     </article>
                 </template>
@@ -450,17 +447,17 @@
 </div>
  
 <!-- ── BOTTOM NAV MÓVIL ───────────────────────────────────── -->
-<nav class="mobile-bottom-nav">
-    <a href="crear-post.html" class="mobile-bottom-nav-item mobile-bottom-nav-item--crear">
-        <span class="mobile-bottom-nav-icon">➕</span>
+<nav class="bottom-nav">
+    <a href="crear-post.html" class="bottom-nav-item bottom-nav-item--crear">
+        <span class="bottom-nav-icon">➕</span>
         <span>Crear</span>
     </a>
-    <a href="feed.html" class="mobile-bottom-nav-item active">
-        <span class="mobile-bottom-nav-icon">🏠</span>
+    <a href="feed.html" class="bottom-nav-item active">
+        <span class="bottom-nav-icon">🏠</span>
         <span>Feed</span>
     </a>
-    <a href="perfil.html" class="mobile-bottom-nav-item">
-        <span class="mobile-bottom-nav-icon">👤</span>
+    <a href="perfil.html" class="bottom-nav-item">
+        <span class="bottom-nav-icon">👤</span>
         <span>Perfil</span>
     </a>
 </nav>
