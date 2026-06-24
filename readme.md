@@ -521,6 +521,9 @@ npx serve .
 | Barra inferior de navegación permanente | ✅ Completo | Crear / Feed / Perfil, visible en todos los tamaños de pantalla |
 | Bottom nav en perfil y post | ✅ Completo | `bottom-nav` propagada a `perfil.html` y `post.html` via `components.css` |
 | Refactor clase `bottom-nav` | ✅ Completo | Renombrada desde `mobile-bottom-nav`; estilos y `[x-cloak]` migrados a `components.css` |
+| Lightbox ampliado | ✅ Completo | Panel lateral 460px, ancho máximo 1300px |
+| Lazy load de respuestas en lightbox | ✅ Completo | Botón "Ver X respuestas" carga bajo demanda vía `GET /comentarios/{id}/respuestas` |
+| Menú ⋯ en comentarios del lightbox | ✅ Completo | Reemplaza botones ✏️🗑️ directos; aplica a nivel 1 y nivel 2 |
 
 ### Pendientes 🚧
  
@@ -535,10 +538,12 @@ npx serve .
 | Área     | Descripción                                                  | Prioridad |
 |----------|--------------------------------------------------------------|-----------|
 | Backend  | Tipos de cuenta diferenciados: `USUARIO` / `TIENDA`          | Alta      |
+| Frontend | Replicar lazy load + menú ⋯ de comentarios en `post.html` y demás páginas con comentarios | Alta |
 | Backend  | Entidad `Spot` con campos de geolocalización (lat, lng, nombre, descripción) | Media |
+| Frontend | Sistema de módulos JS por dominio (`comentarios.js`, `lightbox.js`) — refactor pendiente | Media |
 | Frontend | Integración de Google Maps / Leaflet para tab de Spots       | Media     |
 | Frontend | Header libre para integrar herramientas de pesca (clima, mareas, spots cercanos) | Baja |
- 
+
 ---
  
 ## 🔗 Relación con el Backend

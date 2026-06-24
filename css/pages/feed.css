@@ -319,10 +319,10 @@
 .lightbox-container {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr 460px;
   width: 100%;
-  max-width: 1100px;
-  max-height: 90vh;
+  max-width: 1300px;
+  max-height: 92vh;
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -497,6 +497,44 @@
   margin: 0.2rem 0 0;
   word-break: break-word;
 }
+
+/* Respuestas nivel 2 en lightbox */
+.lightbox-respuestas {
+  margin-left: 1.75rem;
+  margin-top: 0.5rem;
+  border-left: 2px solid var(--border-color);
+  padding-left: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lightbox-comentario--respuesta {
+  opacity: 0.92;
+}
+
+/* Botón lazy load de respuestas */
+.lightbox-ver-respuestas {
+  margin-left: 1.75rem;
+  margin-top: 0.375rem;
+  background: none;
+  border: none;
+  color: var(--accent-ocean);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: opacity 0.15s ease;
+}
+
+.lightbox-ver-respuestas:hover {
+  opacity: 0.75;
+}
+
+.lightbox-ver-respuestas:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
  
 /* Nuevo comentario */
 .lightbox-nuevo-comentario {
@@ -544,21 +582,22 @@
 @media (max-width: 768px) {
   .lightbox-container {
     grid-template-columns: 1fr;
-    grid-template-rows: 50vh 1fr;
-    max-height: 95vh;
+    grid-template-rows: 45vh 1fr;
+    max-height: 96vh;
   }
  
   .lightbox-imagen {
     min-height: unset;
-    max-height: 50vh;
+    max-height: 45vh;
   }
  
   .lightbox-panel {
     border-left: none;
     border-top: 1px solid var(--border-color);
-    max-height: 45vh;
+    max-height: 51vh;
   }
 }
+
 /* ── Chips de categorías ─────────────────────────────────── */
 .categorias-chips-wrap {
   overflow-x: auto;

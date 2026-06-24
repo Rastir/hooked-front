@@ -5,7 +5,48 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
-## [Unreleased]## 
+## [Unreleased]
+
+### Pending (deuda técnica registrada)
+- `feed.html` — El header queda libre para integrar herramientas de pesca
+  (calculadoras de marea, clima, spots cercanos, etc.) — diseño pendiente.
+- `post.html` / `post.js` — Verificar en pruebas reales que el flujo completo
+  de edición de comentario funciona de extremo a extremo (abrir → editar → guardar).
+- General — Spots y Tiendas siguen como placeholders en el buscador global.
+  Requieren trabajo de backend + mapas antes de poder implementarse.
+- General — El sistema de comentarios (lazy load de respuestas, menú ⋯, editar/eliminar)
+  está implementado en el lightbox de `feed.html`. Pendiente replicar el mismo
+  comportamiento en todos los lugares donde haya comentarios (`post.html`, etc.).
+- Arquitectura — Considerar refactor hacia sistema de módulos JS por dominio
+  (`comentarios.js`, `lightbox.js`, etc.) para centralizar lógica reutilizable.
+  Cuando se implemente, un cambio en el módulo se propaga a todas las páginas.
+
+## [0.15.0] — 2026-06-24
+
+### Added
+- `feed.html` / `feed.js` — Lazy load de respuestas en el lightbox: los comentarios
+  con respuestas muestran un botón "💬 Ver X respuestas" que las carga bajo demanda.
+  No se hacen peticiones al backend hasta que el usuario lo solicita explícitamente.
+- `feed.html` / `feed.js` — Respuestas de nivel 2 visibles en el lightbox con
+  indentación visual (línea vertical izquierda) y avatar del autor.
+- `feed.js` — `cargarRespuestasLightbox(comentario)`: carga paginada de respuestas
+  vía `GET /api/comentarios/{id}/respuestas?pagina=0&tamano=10`.
+- `feed.js` — `eliminarRespuestaLightbox(respuesta, comentarioPadre)`: elimina una
+  respuesta de nivel 2 con confirmación via `Utils.confirm()` y actualiza el contador
+  local de `respuestasCount`.
+
+### Changed
+- `feed.html` — Botones ✏️🗑️ en comentarios del lightbox reemplazados por menú
+  desplegable de 3 puntos (⋯). Aplica tanto a comentarios nivel 1 como a respuestas
+  nivel 2. Más limpio visualmente y consistente con patrones modernos de UI.
+- `feed.css` — `.lightbox-container` ampliado: panel lateral de 380px → 460px,
+  ancho máximo de 1100px → 1300px, altura máxima de 90vh → 92vh.
+- `feed.css` — Responsive móvil ajustado: panel inferior sube a 51vh para aprovechar
+  el espacio extra.
+
+### Fixed
+- `feed.html` — El lightbox no mostraba respuestas de nivel 2. Ahora se renderizan
+  correctamente una vez que el usuario las solicita.
 
 ### Pending (deuda técnica registrada)
 - `feed.html` — El header queda libre para integrar herramientas de pesca

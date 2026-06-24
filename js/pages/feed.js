@@ -1,5 +1,5 @@
 document.addEventListener('alpine:init', () => {
- 
+
   // ══════════════════════════════════════════════════════════
   // feedApp — controla el feed principal y el lightbox
   // ══════════════════════════════════════════════════════════
@@ -13,7 +13,7 @@ document.addEventListener('alpine:init', () => {
     currentPage: 0,
     selectedCategory: null,
     isInitialized: false,
- 
+
     lightbox: {
       abierto: false,
       post: null,
@@ -23,17 +23,18 @@ document.addEventListener('alpine:init', () => {
       enviando: false,
       comentarioEditando: null,
       textoEditando: '',
+      menuAbierto: null,
     },
- 
+
     async init() {
       const token = localStorage.getItem(CONFIG.STORAGE.TOKEN);
       const userData = localStorage.getItem(CONFIG.STORAGE.USER);
- 
+
       if (!token) {
         window.location.href = 'index.html';
         return;
       }
- 
+
       if (userData && userData !== 'undefined' && userData !== 'null') {
         try {
           this.user = JSON.parse(userData);
@@ -43,12 +44,12 @@ document.addEventListener('alpine:init', () => {
       } else {
         this.user = this.decodeTokenUser(token);
       }
- 
+
       await this.loadCategorias();
       await this.loadPosts();
       this.isInitialized = true;
     },
- 
+
     decodeTokenUser(token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -61,7 +62,7 @@ document.addEventListener('alpine:init', () => {
         return null;
       }
     },
- 
+
     async loadPosts() {
       this.loading = true;
       try {
@@ -69,12 +70,12 @@ document.addEventListener('alpine:init', () => {
         if (this.selectedCategory && this.selectedCategory !== 'todo') {
           endpoint += `&categoriaId=${this.selectedCategory}`;
         }
- 
+
         const response = await api.get(endpoint);
- 
+
         let newPosts = [];
         let totalPages = null;
- 
+
         if (Array.isArray(response)) {
           newPosts = response;
         } else if (response?.content) {
@@ -83,9 +84,9 @@ document.addEventListener('alpine:init', () => {
         } else if (response && typeof response === 'object') {
           newPosts = Object.values(response).find(v => Array.isArray(v)) || [];
         }
- 
+
         const mappedPosts = newPosts.map(post => this.mapearPostDesdeBackend(post));
- 
+
         if (this.currentPage === 0) {
           this.posts = [];
           await this.$nextTick();
@@ -93,11 +94,11 @@ document.addEventListener('alpine:init', () => {
         } else {
           this.posts = [...this.posts, ...mappedPosts];
         }
- 
+
         this.hasMorePosts = totalPages !== null
           ? this.currentPage < totalPages - 1
           : newPosts.length === 10;
- 
+
       } catch (err) {
         console.error('[FEED] Error cargando posts:', err);
         this.posts = [];
@@ -106,7 +107,7 @@ document.addEventListener('alpine:init', () => {
         this.loading = false;
       }
     },
- 
+
     mapearPostDesdeBackend(post) {
       return {
         id: post.id,
@@ -126,7 +127,7 @@ document.addEventListener('alpine:init', () => {
         comentarios_count: post.comentariosCount || 0
       };
     },
- 
+
     async loadMore() {
       if (this.loadingMore || !this.hasMorePosts) return;
       this.loadingMore = true;
@@ -137,7 +138,7 @@ document.addEventListener('alpine:init', () => {
         this.loadingMore = false;
       }
     },
- 
+
     async loadCategorias() {
       try {
         this.categorias = await api.get(CONFIG.ENDPOINTS.CATEGORIAS) || [];
@@ -146,28 +147,28 @@ document.addEventListener('alpine:init', () => {
         this.categorias = [];
       }
     },
- 
+
     filterByCategory(catId) {
       this.selectedCategory = catId;
       this.currentPage = 0;
       this.posts = [];
       this.hasMorePosts = true;
       this.$nextTick(() => this.loadPosts());
- 
+
       const url = catId && catId !== 'todo' ? `?categoria=${catId}` : 'feed.html';
       history.pushState({ category: catId }, '', url);
     },
- 
+
     async toggleLike(post) {
       if (!post?.id) return;
- 
+
       const prevLiked = post.liked;
       const prevCount = post.like_count || 0;
- 
+
       post.liked = !post.liked;
       post.like_count = post.liked ? prevCount + 1 : Math.max(0, prevCount - 1);
       this.posts = [...this.posts];
- 
+
       try {
         const response = await api.post(`${CONFIG.ENDPOINTS.POSTS}/${post.id}/like`, {});
         if (response?.likedByCurrentUser !== undefined) {
@@ -188,19 +189,19 @@ document.addEventListener('alpine:init', () => {
         this.showToast('Error al procesar like', 'error');
       }
     },
- 
+
     formatDate(dateString) {
       if (!dateString || dateString === 'null' || dateString === 'undefined') return 'Fecha desconocida';
       try {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return 'Fecha inválida';
- 
+
         const diff = (Date.now() - date) / 1000;
         if (diff < 60) return 'Hace un momento';
         if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
         if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
         if (diff < 604800) return `Hace ${Math.floor(diff / 86400)} d`;
- 
+
         return date.toLocaleDateString('es-ES', {
           day: 'numeric', month: 'short',
           year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
@@ -209,12 +210,12 @@ document.addEventListener('alpine:init', () => {
         return 'Fecha desconocida';
       }
     },
- 
+
     async sharePost(post) {
       if (!post?.id) return;
       const url = `${window.location.origin}/post.html?id=${post.id}`;
       if (navigator.share) {
-        try { await navigator.share({ title: post.titulo || 'Hooked', url }); } catch {}
+        try { await navigator.share({ title: post.titulo || 'Hooked', url }); } catch { }
       } else {
         try {
           await navigator.clipboard.writeText(url);
@@ -224,7 +225,7 @@ document.addEventListener('alpine:init', () => {
         }
       }
     },
- 
+
     // ── Lightbox ──────────────────────────────────────────────
     async abrirLightbox(post) {
       this.lightbox.abierto = true;
@@ -234,7 +235,7 @@ document.addEventListener('alpine:init', () => {
       document.body.style.overflow = 'hidden'; // bloquea scroll del feed
       await this._cargarComentariosLightbox(post.id);
     },
- 
+
     cerrarLightbox() {
       this.lightbox.abierto = false;
       this.lightbox.post = null;
@@ -242,14 +243,23 @@ document.addEventListener('alpine:init', () => {
       this.lightbox.nuevoComentario = '';
       document.body.style.overflow = ''; // restaura scroll del feed
     },
- 
+
     async _cargarComentariosLightbox(postId) {
       try {
         this.lightbox.loadingComentarios = true;
         const res = await api.get(
           `${CONFIG.ENDPOINTS.COMENTARIOS}/post/${postId}/principales?pagina=0&tamano=20&_t=${Date.now()}`
         );
-        this.lightbox.comentarios = res.contenido || res.content || [];
+        const comentarios = res.contenido || res.content || [];
+        // Inicializamos los campos de lazy load en cada comentario
+        this.lightbox.comentarios = comentarios.map(c => ({
+          ...c,
+          respuestasCount: c.totalRespuestas ?? 0,
+          respuestas: [],
+          _respuestasCargadas: false,
+          _cargandoRespuestas: false,
+          _menuAbierto: false,
+        }));
       } catch (err) {
         console.error('[LIGHTBOX] Error comentarios:', err);
         this.lightbox.comentarios = [];
@@ -257,16 +267,16 @@ document.addEventListener('alpine:init', () => {
         this.lightbox.loadingComentarios = false;
       }
     },
- 
+
     async toggleLikeLightbox() {
       const post = this.lightbox.post;
       if (!post) return;
- 
+
       const prevLiked = post.liked;
       const prevCount = post.like_count || 0;
       post.liked = !post.liked;
       post.like_count = post.liked ? prevCount + 1 : Math.max(0, prevCount - 1);
- 
+
       try {
         const response = await api.post(`${CONFIG.ENDPOINTS.POSTS}/${post.id}/like`, {});
         if (response?.likedByCurrentUser !== undefined) {
@@ -284,11 +294,11 @@ document.addEventListener('alpine:init', () => {
         this.showToast('Error al procesar like', 'error');
       }
     },
- 
+
     async enviarComentarioLightbox() {
       const post = this.lightbox.post;
       if (!this.lightbox.nuevoComentario.trim() || this.lightbox.enviando || !post) return;
- 
+
       try {
         this.lightbox.enviando = true;
         const creado = await api.post(CONFIG.ENDPOINTS.COMENTARIOS, {
@@ -310,22 +320,22 @@ document.addEventListener('alpine:init', () => {
         this.lightbox.enviando = false;
       }
     },
- 
+
     esPropioLightbox(comentario) {
       if (!this.user || !comentario.autor) return false;
       return comentario.autor.id?.toString() === this.user.id?.toString();
     },
- 
+
     editarComentarioLightbox(comentario) {
       this.lightbox.comentarioEditando = comentario;
       this.lightbox.textoEditando = comentario.contenido;
     },
- 
+
     cancelarEdicionLightbox() {
       this.lightbox.comentarioEditando = null;
       this.lightbox.textoEditando = '';
     },
- 
+
     async guardarEdicionLightbox() {
       const comentario = this.lightbox.comentarioEditando;
       if (!comentario || !this.lightbox.textoEditando.trim()) return;
@@ -347,7 +357,7 @@ document.addEventListener('alpine:init', () => {
         this.showToast('No se pudo editar el comentario', 'error');
       }
     },
- 
+
     async eliminarComentarioLightbox(comentario) {
       const ok = await Utils.confirm({
         icono: '🗑️',
@@ -358,7 +368,7 @@ document.addEventListener('alpine:init', () => {
         peligro: true,
       });
       if (!ok) return;
- 
+
       try {
         await api.delete(`${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}`);
         this.lightbox.comentarios = this.lightbox.comentarios.filter(c => c.id !== comentario.id);
@@ -372,35 +382,75 @@ document.addEventListener('alpine:init', () => {
         this.showToast('No se pudo eliminar el comentario', 'error');
       }
     },
- 
+
+    async cargarRespuestasLightbox(comentario) {
+      if (comentario._cargandoRespuestas || comentario._respuestasCargadas) return;
+      comentario._cargandoRespuestas = true;
+      try {
+        const res = await api.get(
+          `${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}/respuestas?pagina=0&tamano=10&_t=${Date.now()}`
+        );
+        const respuestas = res.contenido || res.content || res || [];
+        comentario.respuestas = respuestas.map(r => ({
+          ...r,
+          _menuAbierto: false,
+        }));
+        comentario._respuestasCargadas = true;
+      } catch (err) {
+        console.error('[LIGHTBOX] Error respuestas:', err);
+        this.showToast('No se pudieron cargar las respuestas', 'error');
+      } finally {
+        comentario._cargandoRespuestas = false;
+      }
+    },
+
+    async eliminarRespuestaLightbox(respuesta, comentarioPadre) {
+      const ok = await Utils.confirm({
+        titulo: '¿Eliminar respuesta?',
+        mensaje: 'Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        danger: true,
+      });
+      if (!ok) return;
+      try {
+        await api.delete(`${CONFIG.ENDPOINTS.COMENTARIOS}/${respuesta.id}`);
+        comentarioPadre.respuestas = comentarioPadre.respuestas.filter(r => r.id !== respuesta.id);
+        comentarioPadre.respuestasCount = Math.max(0, (comentarioPadre.respuestasCount || 1) - 1);
+        this.showToast('Respuesta eliminada', 'info');
+      } catch {
+        this.showToast('No se pudo eliminar la respuesta', 'error');
+      }
+    },
+
     logout() {
       api.logout();
       window.location.href = 'index.html';
     },
- 
+
     showToast(message, type = 'info') {
       window.dispatchEvent(new CustomEvent('toast', { detail: { message, type } }));
     }
   }));
- 
+
   // ══════════════════════════════════════════════════════════
   // tipsWidget — widget "Tip del día" en el sidebar
   // ══════════════════════════════════════════════════════════
   Alpine.data('tipsWidget', () => ({
     tipActual: 0,
     tips: [
-      { emoji: '🌅', categoria: 'Horario',     tip: 'Las mejores mordidas son al amanecer y al atardecer, cuando la luz es baja y los peces suben a alimentarse.' },
-      { emoji: '🌊', categoria: 'Agua',        tip: 'En agua turbia usa señuelos de colores brillantes como naranja o chartreuse. En agua clara, tonos naturales y transparentes.' },
-      { emoji: '🎣', categoria: 'Técnica',     tip: 'Varía la velocidad del curricán. A veces un tirón brusco seguido de pausa es lo que provoca el ataque.' },
+      { emoji: '🌅', categoria: 'Horario', tip: 'Las mejores mordidas son al amanecer y al atardecer, cuando la luz es baja y los peces suben a alimentarse.' },
+      { emoji: '🌊', categoria: 'Agua', tip: 'En agua turbia usa señuelos de colores brillantes como naranja o chartreuse. En agua clara, tonos naturales y transparentes.' },
+      { emoji: '🎣', categoria: 'Técnica', tip: 'Varía la velocidad del curricán. A veces un tirón brusco seguido de pausa es lo que provoca el ataque.' },
       { emoji: '🌡️', categoria: 'Temperatura', tip: 'Los peces son de sangre fría. Cuando el agua baja de 15°C se vuelven más lentos — usa señuelos más pequeños y muévelos despacio.' },
-      { emoji: '🪱', categoria: 'Carnada',     tip: 'La lombriz de tierra sigue siendo la carnada más efectiva para agua dulce. Cámbiala cada 20-30 minutos para que siga activa.' },
-      { emoji: '🌙', categoria: 'Luna',        tip: 'Luna llena y luna nueva son los mejores días para pescar. La gravedad lunar afecta el comportamiento de los peces.' },
-      { emoji: '🌿', categoria: 'Hábitat',     tip: 'Busca estructuras bajo el agua: rocas, troncos, plantas acuáticas. Los peces se refugian ahí para cazar.' },
-      { emoji: '🎯', categoria: 'Precisión',   tip: 'Lanza paralelo a la orilla, no hacia el centro. La mayoría de peces se alimentan cerca de la vegetación costera.' },
-      { emoji: '🤫', categoria: 'Silencio',    tip: 'Los peces detectan vibración a través de la línea lateral. Camina suave en la orilla y evita golpear la embarcación.' },
-      { emoji: '🪝', categoria: 'Anzuelo',     tip: 'Un anzuelo sin filo es el error más común. Pruébalo en tu uña — si resbala, afílalo. Un buen filo duplica tus capturas.' },
-      { emoji: '☁️', categoria: 'Clima',       tip: 'Los días nublados son ideales. Sin sol directo los peces se sienten seguros y se mueven más, especialmente truchas.' },
-      { emoji: '🎶', categoria: 'Paciencia',   tip: 'El 10% del agua contiene el 90% de los peces. Aprende a leer el río: corrientes, remansos, cambios de profundidad.' },
+      { emoji: '🪱', categoria: 'Carnada', tip: 'La lombriz de tierra sigue siendo la carnada más efectiva para agua dulce. Cámbiala cada 20-30 minutos para que siga activa.' },
+      { emoji: '🌙', categoria: 'Luna', tip: 'Luna llena y luna nueva son los mejores días para pescar. La gravedad lunar afecta el comportamiento de los peces.' },
+      { emoji: '🌿', categoria: 'Hábitat', tip: 'Busca estructuras bajo el agua: rocas, troncos, plantas acuáticas. Los peces se refugian ahí para cazar.' },
+      { emoji: '🎯', categoria: 'Precisión', tip: 'Lanza paralelo a la orilla, no hacia el centro. La mayoría de peces se alimentan cerca de la vegetación costera.' },
+      { emoji: '🤫', categoria: 'Silencio', tip: 'Los peces detectan vibración a través de la línea lateral. Camina suave en la orilla y evita golpear la embarcación.' },
+      { emoji: '🪝', categoria: 'Anzuelo', tip: 'Un anzuelo sin filo es el error más común. Pruébalo en tu uña — si resbala, afílalo. Un buen filo duplica tus capturas.' },
+      { emoji: '☁️', categoria: 'Clima', tip: 'Los días nublados son ideales. Sin sol directo los peces se sienten seguros y se mueven más, especialmente truchas.' },
+      { emoji: '🎶', categoria: 'Paciencia', tip: 'El 10% del agua contiene el 90% de los peces. Aprende a leer el río: corrientes, remansos, cambios de profundidad.' },
     ],
     get tip() { return this.tips[this.tipActual]; },
     init() {
@@ -409,7 +459,7 @@ document.addEventListener('alpine:init', () => {
       this.tipActual = diaDelAnio % this.tips.length;
     }
   }));
- 
+
   // ══════════════════════════════════════════════════════════
   // buscarApp — modal de búsqueda global
   //
@@ -423,7 +473,7 @@ document.addEventListener('alpine:init', () => {
   // cañas en vez de una.
   // ══════════════════════════════════════════════════════════
   Alpine.data('buscarApp', () => ({
- 
+
     buscar: {
       abierto: false,
       query: '',
@@ -432,12 +482,12 @@ document.addEventListener('alpine:init', () => {
       usuarios: [],
       posts: [],
     },
- 
+
     init() {
       // El evento se escucha con @abrir-buscador.window en el HTML.
       // No necesitamos addEventListener manual aquí.
     },
- 
+
     abrirModal() {
       this.buscar.abierto = true;
       this.buscar.query = '';
@@ -447,17 +497,17 @@ document.addEventListener('alpine:init', () => {
       // Enfocar el input una vez Alpine termine de renderizar el modal
       this.$nextTick(() => this.$refs.inputBuscar?.focus());
     },
- 
+
     cerrar() {
       this.buscar.abierto = false;
     },
- 
+
     cambiarTab(tab) {
       // Los tabs "próximamente" están bloqueados con @click.prevent en el HTML
       if (tab === 'spots' || tab === 'tiendas') return;
       this.buscar.tabActiva = tab;
     },
- 
+
     async buscarTodo() {
       const q = this.buscar.query.trim();
       if (!q) {
@@ -465,7 +515,7 @@ document.addEventListener('alpine:init', () => {
         this.buscar.posts = [];
         return;
       }
- 
+
       this.buscar.loading = true;
       try {
         // Promise.all lanza las dos peticiones al mismo tiempo
@@ -482,7 +532,7 @@ document.addEventListener('alpine:init', () => {
         this.buscar.loading = false;
       }
     },
- 
+
     async _buscarUsuarios(q) {
       try {
         // GET /api/usuarios/buscar-avanzado?q=...
@@ -495,7 +545,7 @@ document.addEventListener('alpine:init', () => {
         return [];
       }
     },
- 
+
     async _buscarPosts(q) {
       try {
         // GET /api/posts?busqueda=... — mismo endpoint del feed con filtro
@@ -508,7 +558,7 @@ document.addEventListener('alpine:init', () => {
         return [];
       }
     },
- 
+
   }));
- 
+
 });
