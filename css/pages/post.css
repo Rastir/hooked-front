@@ -369,51 +369,108 @@
   color: var(--accent-ocean);
 }
 
-/* ── Botones de acción del comentario (editar + eliminar) ── */
+/* ── Menú de 3 puntos (⋯) del comentario ── */
 /*
- * Los agrupamos en un contenedor flex para que queden
- * pegados al extremo derecho de la línea de meta-info.
- * Es como los botones de una nota adhesiva en una app de tareas.
+ * Antes cada comentario mostraba dos botones (✏️🗑️) que se
+ * volvían visibles al hacer hover. Ahora es UN botón (⋯) que,
+ * al darle clic, abre un mini menú — como el botón de "más
+ * opciones" que ves en apps como WhatsApp o Instagram.
  */
-.comentario-acciones-propias {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
+.comentario-menu-wrap {
+  position: relative;
   margin-left: auto;
-  /* empuja el grupo hacia la derecha */
+  /* empuja el botón ⋯ hacia la derecha de la línea de meta-info */
 }
 
-/* Estilo base compartido para ambos botones */
-.btn-accion-comentario {
+.comentario-menu-btn {
   background: none;
   border: none;
-  font-size: 0.7rem;
+  color: var(--text-muted);
   cursor: pointer;
-  padding: 0.2rem 0.35rem;
-  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  padding: 0 0.25rem;
   line-height: 1;
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+
+.comentario-menu-btn:hover {
+  color: var(--text-primary);
+}
+
+/* El "cajoncito" que se despliega debajo del botón ⋯ */
+.comentario-dropdown {
+  position: absolute;
+  right: 0;
+  top: 1.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  min-width: 130px;
+  overflow: hidden;
+}
+
+.comentario-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.comentario-dropdown button:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.comentario-dropdown button.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* ── Edición inline (reemplaza el texto mientras editas) ── */
+/*
+ * Imagina que en vez de sacar la hoja del archivero (el modal
+ * viejo), ahora escribes directo encima con un lápiz borrable.
+ * Reutiliza .comentario-input-sm, que ya tenías definido arriba
+ * para el formulario de respuesta.
+ */
+.comentario-edicion-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+}
+
+/* ── Botón "Ver X respuestas" (carga bajo demanda) ── */
+.comentario-ver-respuestas {
+  background: none;
+  border: none;
+  color: var(--accent-ocean);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0 0;
+  text-align: left;
+  transition: opacity var(--transition-fast);
+}
+
+.comentario-ver-respuestas:hover {
+  opacity: 0.8;
+}
+
+.comentario-ver-respuestas:disabled {
   opacity: 0.5;
-  /* discretos por defecto */
-}
-
-/* Al hacer hover sobre la card, los botones se vuelven visibles */
-.comentario-card:hover .btn-accion-comentario {
-  opacity: 1;
-}
-
-.btn-accion-comentario:hover {
-  transform: scale(1.15);
-}
-
-/* El botón de editar se ilumina en azul */
-.btn-editar:hover {
-  background: rgba(14, 165, 233, 0.12);
-}
-
-/* El botón de eliminar se ilumina en rojo */
-.btn-eliminar:hover {
-  background: rgba(239, 68, 68, 0.12);
+  cursor: default;
 }
 
 .respuesta-form {
@@ -622,156 +679,6 @@
 }
 
 
-/* ══════════════════════════════════════════════════════════
-   MODAL DE EDICIÓN DE COMENTARIO
-   
-   Piensa en esto como una ventana de diálogo del sistema,
-   pero con el estilo del proyecto. Tiene 3 capas:
-   1. El overlay (fondo oscuro semitransparente)
-   2. La card (la ventana en sí)
-   3. El contenido (header, body, footer)
-   ══════════════════════════════════════════════════════════ */
-
-/* Capa 1: El fondo oscuro que cubre toda la pantalla */
-.modal-edicion-overlay {
-  position: fixed;
-  /* fijo respecto a la ventana, no al scroll */
-  inset: 0;
-  /* top: 0, right: 0, bottom: 0, left: 0 */
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  /* encima de todo, incluyendo el header */
-  padding: 1rem;
-}
-
-/* Capa 2: La ventana del modal */
-.modal-edicion-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 520px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-  animation: modalEntrar 0.2s ease-out;
-}
-
-@keyframes modalEntrar {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* Capa 3a: Cabecera con título y botón de cerrar */
-.modal-edicion-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.25rem 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-edicion-titulo {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-/* El × para cerrar */
-.modal-edicion-cerrar {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  line-height: 1;
-  transition: color var(--transition-fast), background var(--transition-fast);
-}
-
-.modal-edicion-cerrar:hover {
-  color: var(--text-primary);
-  background: var(--bg-elevated);
-}
-
-/* Capa 3b: Cuerpo con el textarea */
-.modal-edicion-body {
-  padding: 1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* El textarea hereda los estilos de .comentario-input,
-   pero le damos un tamaño mínimo más generoso */
-.modal-edicion-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-/* Fila inferior del body: contador + hint de teclado */
-.modal-edicion-footer-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-edicion-hint {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  opacity: 0.8;
-}
-
-/* Capa 3c: Pie con los botones */
-.modal-edicion-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem 1.25rem;
-  border-top: 1px solid var(--border-color);
-}
-
-/* ── Animaciones del modal con Alpine x-transition ───────── */
-.modal-enter {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.modal-enter-start {
-  opacity: 0;
-  transform: scale(0.95);
-}
-
-.modal-enter-end {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.modal-leave {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.modal-leave-start {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.modal-leave-end {
-  opacity: 0;
-  transform: scale(0.95);
-}
-
-
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   .post-page {
@@ -786,15 +693,4 @@
   .post-detalle-titulo {
     font-size: 1.2rem;
   }
-
-  /* En móvil el modal ocupa más ancho */
-  .modal-edicion-card {
-    max-width: 100%;
-  }
-
-  /* En móvil los hints de teclado no tienen mucho sentido */
-  .modal-edicion-hint {
-    display: none;
-  }
 }
- 

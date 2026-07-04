@@ -4,6 +4,12 @@ document.addEventListener('alpine:init', () => {
   // feedApp — controla el feed principal y el lightbox
   // ══════════════════════════════════════════════════════════
   Alpine.data('feedApp', () => ({
+    // Mezcla toda la lógica de comentarios (cargar, editar, eliminar,
+    // lazy load de respuestas...) definida una sola vez en
+    // comentarios-mixin.js. A partir de aquí, this.comentarios,
+    // this.editarComentario(), etc. ya existen sin escribirlos de nuevo.
+    ...ComentariosMixin(),
+
     user: null,
     posts: [],
     categorias: [],
@@ -13,17 +19,14 @@ document.addEventListener('alpine:init', () => {
     currentPage: 0,
     selectedCategory: null,
     isInitialized: false,
+    nuevoComentario: '',
 
+    // El lightbox ahora solo guarda SU propio estado de "ventana":
+    // si está abierto y qué post muestra. Los comentarios viven en
+    // this.comentarios (a nivel superior), aportados por el mixin.
     lightbox: {
       abierto: false,
       post: null,
-      comentarios: [],
-      loadingComentarios: false,
-      nuevoComentario: '',
-      enviando: false,
-      comentarioEditando: null,
-      textoEditando: '',
-      menuAbierto: null,
     },
 
     async init() {
@@ -230,41 +233,36 @@ document.addEventListener('alpine:init', () => {
     async abrirLightbox(post) {
       this.lightbox.abierto = true;
       this.lightbox.post = post;
-      this.lightbox.comentarios = [];
-      this.lightbox.nuevoComentario = '';
+      this.nuevoComentario = '';
       document.body.style.overflow = 'hidden'; // bloquea scroll del feed
-      await this._cargarComentariosLightbox(post.id);
+      await this.cargarComentarios(post.id, { tamano: 20 }); // ← método del mixin
     },
 
     cerrarLightbox() {
       this.lightbox.abierto = false;
       this.lightbox.post = null;
-      this.lightbox.comentarios = [];
-      this.lightbox.nuevoComentario = '';
+      this.comentarios = [];
+      this.nuevoComentario = '';
       document.body.style.overflow = ''; // restaura scroll del feed
     },
 
-    async _cargarComentariosLightbox(postId) {
-      try {
-        this.lightbox.loadingComentarios = true;
-        const res = await api.get(
-          `${CONFIG.ENDPOINTS.COMENTARIOS}/post/${postId}/principales?pagina=0&tamano=20&_t=${Date.now()}`
-        );
-        const comentarios = res.contenido || res.content || [];
-        // Inicializamos los campos de lazy load en cada comentario
-        this.lightbox.comentarios = comentarios.map(c => ({
-          ...c,
-          respuestasCount: c.totalRespuestas ?? 0,
-          respuestas: [],
-          _respuestasCargadas: false,
-          _cargandoRespuestas: false,
-          _menuAbierto: false,
-        }));
-      } catch (err) {
-        console.error('[LIGHTBOX] Error comentarios:', err);
-        this.lightbox.comentarios = [];
-      } finally {
-        this.lightbox.loadingComentarios = false;
+    // ────────────────────────────────────────────────────────
+    // Gancho que el mixin llama solo al crear (+1) o eliminar (-1)
+    // un comentario/respuesta. Aquí lo usamos para mantener
+    // sincronizado el contador "comentarios_count" de la card
+    // correspondiente en el feed — algo que solo feedApp necesita
+    // hacer, por eso vive aquí y no en el mixin.
+    // ────────────────────────────────────────────────────────
+    _onCambioComentarios(delta) {
+      const post = this.lightbox.post;
+      if (!post) return;
+      const idx = this.posts.findIndex(p => p.id === post.id);
+      if (idx !== -1) {
+        this.posts[idx] = {
+          ...this.posts[idx],
+          comentarios_count: Math.max(0, (this.posts[idx].comentarios_count || 0) + delta),
+        };
+        this.posts = [...this.posts];
       }
     },
 
@@ -295,132 +293,17 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    // ────────────────────────────────────────────────────────
+    // Envoltorio delgado: el HTML del lightbox sigue llamando
+    // "enviarComentarioLightbox()" (no lo cambiamos ahí todavía),
+    // pero adentro solo arma los datos y delega al mixin.
+    // Es como un mesero que toma tu orden y se la pasa a la cocina
+    // compartida — él no cocina nada, solo entrega el pedido.
+    // ────────────────────────────────────────────────────────
     async enviarComentarioLightbox() {
-      const post = this.lightbox.post;
-      if (!this.lightbox.nuevoComentario.trim() || this.lightbox.enviando || !post) return;
-
-      try {
-        this.lightbox.enviando = true;
-        const creado = await api.post(CONFIG.ENDPOINTS.COMENTARIOS, {
-          contenido: this.lightbox.nuevoComentario.trim(),
-          postId: post.id,
-          comentarioPadreId: null
-        });
-        this.lightbox.comentarios = [creado, ...this.lightbox.comentarios];
-        const idx = this.posts.findIndex(p => p.id === post.id);
-        if (idx !== -1) {
-          this.posts[idx] = { ...this.posts[idx], comentarios_count: (this.posts[idx].comentarios_count || 0) + 1 };
-          this.posts = [...this.posts];
-        }
-        this.lightbox.nuevoComentario = '';
-        this.showToast('Comentario publicado 💬', 'success');
-      } catch (err) {
-        this.showToast(err.message || 'No se pudo publicar el comentario', 'error');
-      } finally {
-        this.lightbox.enviando = false;
-      }
-    },
-
-    esPropioLightbox(comentario) {
-      if (!this.user || !comentario.autor) return false;
-      return comentario.autor.id?.toString() === this.user.id?.toString();
-    },
-
-    editarComentarioLightbox(comentario) {
-      this.lightbox.comentarioEditando = comentario;
-      this.lightbox.textoEditando = comentario.contenido;
-    },
-
-    cancelarEdicionLightbox() {
-      this.lightbox.comentarioEditando = null;
-      this.lightbox.textoEditando = '';
-    },
-
-    async guardarEdicionLightbox() {
-      const comentario = this.lightbox.comentarioEditando;
-      if (!comentario || !this.lightbox.textoEditando.trim()) return;
-      if (this.lightbox.textoEditando.trim() === comentario.contenido) {
-        this.cancelarEdicionLightbox();
-        return;
-      }
-      try {
-        const actualizado = await api.put(
-          `${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}`,
-          { contenido: this.lightbox.textoEditando.trim() }
-        );
-        this.lightbox.comentarios = this.lightbox.comentarios.map(c =>
-          c.id === comentario.id ? { ...c, contenido: actualizado.contenido } : c
-        );
-        this.cancelarEdicionLightbox();
-        this.showToast('Comentario actualizado ✏️', 'success');
-      } catch {
-        this.showToast('No se pudo editar el comentario', 'error');
-      }
-    },
-
-    async eliminarComentarioLightbox(comentario) {
-      const ok = await Utils.confirm({
-        icono: '🗑️',
-        titulo: '¿Eliminar comentario?',
-        mensaje: 'Esta acción no se puede deshacer.',
-        btnOk: 'Eliminar',
-        btnCancel: 'Cancelar',
-        peligro: true,
-      });
-      if (!ok) return;
-
-      try {
-        await api.delete(`${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}`);
-        this.lightbox.comentarios = this.lightbox.comentarios.filter(c => c.id !== comentario.id);
-        const idx = this.posts.findIndex(p => p.id === this.lightbox.post?.id);
-        if (idx !== -1) {
-          this.posts[idx] = { ...this.posts[idx], comentarios_count: Math.max(0, (this.posts[idx].comentarios_count || 1) - 1) };
-          this.posts = [...this.posts];
-        }
-        this.showToast('Comentario eliminado', 'info');
-      } catch {
-        this.showToast('No se pudo eliminar el comentario', 'error');
-      }
-    },
-
-    async cargarRespuestasLightbox(comentario) {
-      if (comentario._cargandoRespuestas || comentario._respuestasCargadas) return;
-      comentario._cargandoRespuestas = true;
-      try {
-        const res = await api.get(
-          `${CONFIG.ENDPOINTS.COMENTARIOS}/${comentario.id}/respuestas?pagina=0&tamano=10&_t=${Date.now()}`
-        );
-        const respuestas = res.contenido || res.content || res || [];
-        comentario.respuestas = respuestas.map(r => ({
-          ...r,
-          _menuAbierto: false,
-        }));
-        comentario._respuestasCargadas = true;
-      } catch (err) {
-        console.error('[LIGHTBOX] Error respuestas:', err);
-        this.showToast('No se pudieron cargar las respuestas', 'error');
-      } finally {
-        comentario._cargandoRespuestas = false;
-      }
-    },
-
-    async eliminarRespuestaLightbox(respuesta, comentarioPadre) {
-      const ok = await Utils.confirm({
-        titulo: '¿Eliminar respuesta?',
-        mensaje: 'Esta acción no se puede deshacer.',
-        confirmText: 'Eliminar',
-        cancelText: 'Cancelar',
-        danger: true,
-      });
-      if (!ok) return;
-      try {
-        await api.delete(`${CONFIG.ENDPOINTS.COMENTARIOS}/${respuesta.id}`);
-        comentarioPadre.respuestas = comentarioPadre.respuestas.filter(r => r.id !== respuesta.id);
-        comentarioPadre.respuestasCount = Math.max(0, (comentarioPadre.respuestasCount || 1) - 1);
-        this.showToast('Respuesta eliminada', 'info');
-      } catch {
-        this.showToast('No se pudo eliminar la respuesta', 'error');
-      }
+      if (!this.lightbox.post) return;
+      const creado = await this.enviarComentario(this.lightbox.post.id, this.nuevoComentario);
+      if (creado) this.nuevoComentario = '';
     },
 
     logout() {

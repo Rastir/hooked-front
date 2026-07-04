@@ -10,16 +10,54 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 ### Pending (deuda técnica registrada)
 - `feed.html` — El header queda libre para integrar herramientas de pesca
   (calculadoras de marea, clima, spots cercanos, etc.) — diseño pendiente.
-- `post.html` / `post.js` — Verificar en pruebas reales que el flujo completo
-  de edición de comentario funciona de extremo a extremo (abrir → editar → guardar).
 - General — Spots y Tiendas siguen como placeholders en el buscador global.
   Requieren trabajo de backend + mapas antes de poder implementarse.
-- General — El sistema de comentarios (lazy load de respuestas, menú ⋯, editar/eliminar)
-  está implementado en el lightbox de `feed.html`. Pendiente replicar el mismo
-  comportamiento en todos los lugares donde haya comentarios (`post.html`, etc.).
-- Arquitectura — Considerar refactor hacia sistema de módulos JS por dominio
-  (`comentarios.js`, `lightbox.js`, etc.) para centralizar lógica reutilizable.
-  Cuando se implemente, un cambio en el módulo se propaga a todas las páginas.
+
+## [0.16.0] — 2026-07-03
+
+### Added
+- `js/comentarios-mixin.js` — nuevo módulo compartido (función `ComentariosMixin()`)
+  que centraliza toda la lógica de comentarios: cargar, paginar, lazy load de
+  respuestas, crear, editar, eliminar y detectar autoría. Se combina dentro de
+  `feedApp` y `postApp` con el operador spread (`...ComentariosMixin()`).
+- `post.html` / `post.js` — Lazy load de respuestas replicado desde el lightbox
+  de `feed.html`: botón "💬 Ver X respuestas" que las carga bajo demanda.
+- `post.html` / `post.js` — Menú desplegable ⋯ para editar/eliminar comentarios
+  y respuestas propias, reemplazando los botones ✏️🗑️ siempre visibles.
+- `post.html` / `post.js` — Edición inline de comentarios, reemplaza el modal
+  de edición flotante.
+- `feed.js` / `post.js` — Gancho opcional `_onCambioComentarios(delta)`: cada
+  página lo define si necesita reaccionar cuando se crea o elimina un
+  comentario (en `feedApp` actualiza `comentarios_count` de la card en el feed).
+
+### Changed
+- `feed.js` / `feed.html` — Estado de comentarios movido de `lightbox.comentarios`
+  (anidado) a `comentarios` (nivel superior del componente), para compartir la
+  misma forma de datos que `post.js`. El objeto `lightbox` ahora solo guarda
+  `abierto` y `post`.
+- `post.js` / `post.html` — `comentariosArbol` renombrado a `comentarios`;
+  `loadingMas` renombrado a `loadingMasComentarios`, alineados con los nombres
+  del mixin compartido.
+- `post.js` — `enviarComentario()` renombrado a `publicarComentario()` para no
+  chocar con el método genérico `enviarComentario()` que aporta el mixin.
+- `post.js` — Reducido de 494 a 211 líneas al delegar la lógica de comentarios
+  al mixin compartido.
+- `feed.js` — Reducido de 563 a 446 líneas por el mismo motivo.
+
+### Removed
+- `post.html` / `post.css` — Modal de edición de comentario (`modal-edicion-*`)
+  eliminado por completo, junto con sus animaciones (`modal-enter*`/`modal-leave*`)
+  y los estilos huérfanos de los botones ✏️🗑️ siempre visibles.
+- `feed.js` / `post.js` — 8 funciones duplicadas de comentarios (`enviarComentarioLightbox`,
+  `esPropioLightbox`, `editarComentarioLightbox`, `cancelarEdicionLightbox`,
+  `guardarEdicionLightbox`, `eliminarComentarioLightbox`, `cargarRespuestasLightbox`,
+  `eliminarRespuestaLightbox`, `_construirArbol`) eliminadas; la lógica ahora
+  vive una sola vez en `comentarios-mixin.js`.
+
+### Fixed
+- Deuda técnica registrada en `[Unreleased]` desde v0.14.0: "replicar el patrón
+  de comentarios en post.html" y "refactor a sistema de módulos JS por dominio"
+  — ambas resueltas en esta versión.
 
 ## [0.15.0] — 2026-06-24
 

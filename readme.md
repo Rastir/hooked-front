@@ -64,6 +64,7 @@ hooked-frontend/
     ├── api.js              # Cliente HTTP con manejo de JWT y refresh automático
     ├── auth.js             # Componente Alpine de autenticación (login/registro)
     ├── utils.js            # Utilidades compartidas (debounce, formateo, sanitización)
+    ├── comentarios-mixin.js # Lógica compartida de comentarios (mixin para feedApp/postApp)
     └── pages/
         ├── feed.js         # Lógica del feed
         ├── create-post.js  # Lógica de creación de posts
@@ -361,12 +362,52 @@ Utilidades puras sin dependencias.
  
 ---
  
+### `comentarios-mixin.js`
+
+Función `ComentariosMixin()` que regresa un objeto (estado + métodos) para
+"mezclar" dentro de cualquier `Alpine.data()` con el operador spread:
+
+```javascript
+Alpine.data('feedApp', () => ({
+  ...ComentariosMixin(),
+  // ...el resto de feedApp
+}));
+```
+
+Centraliza toda la lógica de comentarios que antes estaba duplicada entre
+`feed.js` y `post.js`: cargar, paginar, lazy load de respuestas, publicar,
+editar, eliminar y detectar autoría. Un cambio aquí se propaga automáticamente
+a cualquier página que use el mixin.
+
+**Estado que aporta:** `comentarios`, `totalComentarios`, `loadingComentarios`,
+`loadingMasComentarios`, `hayMasComentarios`, `paginaComentarios`,
+`comentarioEditando`, `textoEditando`, `enviandoComentario`, `enviandoEdicion`.
+
+**Métodos que aporta:**
+
+| Método | Descripción |
+|--------|-------------|
+| `cargarComentarios(postId, { tamano })` | Carga la primera página de comentarios principales |
+| `cargarMasComentarios(postId, tamano)` | Pagina hacia la siguiente tanda |
+| `cargarRespuestas(comentario)` | Lazy load de respuestas de un comentario (bajo demanda) |
+| `enviarComentario(postId, contenido, comentarioPadreId?)` | Publica comentario o respuesta, según si se pasa el padre |
+| `editarComentario(comentario)` / `cancelarEdicion()` / `guardarEdicion()` | Edición inline |
+| `eliminarComentario(comentario)` | Elimina comentario o respuesta (detecta cuál por `comentarioPadreId`) |
+| `esPropio(comentario)` | Revisa `this.user` o `this.usuarioActual`, el que exista |
+
+**Gancho opcional:** si el componente define `_onCambioComentarios(delta)`,
+el mixin lo llama con `+1` al publicar y `-1` al eliminar — útil para
+sincronizar contadores propios de cada página (p. ej. `comentarios_count`
+en las cards del feed).
+
+---
+
 ### `pages/feed.js`
- 
+
 Componente Alpine `feedApp`. Es el módulo más complejo del frontend.
- 
+
 **Estado:**
- 
+
 ```javascript
 {
   user,           // Datos del usuario logueado
@@ -376,12 +417,15 @@ Componente Alpine `feedApp`. Es el módulo más complejo del frontend.
   loadingMore,    // Spinner del botón "Cargar más"
   hasMorePosts,   // Controla si mostrar el botón
   currentPage,    // Página actual para paginación
-  selectedCategory // Categoría activa para filtrar
+  selectedCategory, // Categoría activa para filtrar
+  lightbox: { abierto, post }, // Estado de la ventana del lightbox (los
+                                // comentarios viven aparte, aportados por
+                                // comentarios-mixin.js)
 }
 ```
- 
+
 **Funciones clave:**
- 
+
 | Función | Descripción |
 |---------|-------------|
 | `loadPosts()` | Carga posts paginados, soporta filtro por categoría |
@@ -391,11 +435,12 @@ Componente Alpine `feedApp`. Es el módulo más complejo del frontend.
 | `filterByCategory(catId)` | Resetea paginación y recarga con nueva categoría |
 | `formatDate(dateString)` | Convierte fecha ISO a texto relativo ("Hace 2 h") |
 | `sharePost(post)` | Web Share API con fallback a clipboard |
-| `abrirLightbox(post)` | Abre lightbox con imagen completa + bloquea scroll del body |
+| `abrirLightbox(post)` | Abre lightbox con imagen completa, bloquea scroll del body y carga comentarios vía el mixin |
 | `cerrarLightbox()` | Cierra lightbox y restaura scroll del body |
- 
+| `enviarComentarioLightbox()` | Envoltorio delgado: toma `nuevoComentario` y lo entrega a `enviarComentario()` del mixin |
+
 ---
- 
+
 ### `pages/create-post.js`
  
 Componente Alpine `createPost`.
@@ -524,6 +569,9 @@ npx serve .
 | Lightbox ampliado | ✅ Completo | Panel lateral 460px, ancho máximo 1300px |
 | Lazy load de respuestas en lightbox | ✅ Completo | Botón "Ver X respuestas" carga bajo demanda vía `GET /comentarios/{id}/respuestas` |
 | Menú ⋯ en comentarios del lightbox | ✅ Completo | Reemplaza botones ✏️🗑️ directos; aplica a nivel 1 y nivel 2 |
+| Módulo compartido de comentarios (mixin) | ✅ Completo | `comentarios-mixin.js`, usado por `feedApp` y `postApp` |
+| Lazy load + menú ⋯ en post.html | ✅ Completo | Mismo patrón que el lightbox del feed |
+| Edición inline de comentarios en post.html | ✅ Completo | Reemplaza el modal de edición flotante |
 
 ### Pendientes 🚧
  
@@ -538,9 +586,7 @@ npx serve .
 | Área     | Descripción                                                  | Prioridad |
 |----------|--------------------------------------------------------------|-----------|
 | Backend  | Tipos de cuenta diferenciados: `USUARIO` / `TIENDA`          | Alta      |
-| Frontend | Replicar lazy load + menú ⋯ de comentarios en `post.html` y demás páginas con comentarios | Alta |
 | Backend  | Entidad `Spot` con campos de geolocalización (lat, lng, nombre, descripción) | Media |
-| Frontend | Sistema de módulos JS por dominio (`comentarios.js`, `lightbox.js`) — refactor pendiente | Media |
 | Frontend | Integración de Google Maps / Leaflet para tab de Spots       | Media     |
 | Frontend | Header libre para integrar herramientas de pesca (clima, mareas, spots cercanos) | Baja |
 
