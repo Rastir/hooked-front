@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es" data-theme="dark">
 
 <head>
@@ -156,10 +156,10 @@
               <span class="nuevo-comentario-label">Escribe un comentario...</span>
             </div>
             <textarea class="comentario-input" x-model="nuevoComentario" placeholder="¿Qué opinas de esta captura? 🎣"
-              rows="3" maxlength="500" @keydown.ctrl.enter="enviarComentario()"></textarea>
+              rows="3" maxlength="500" @keydown.ctrl.enter="publicarComentario()"></textarea>
             <div class="nuevo-comentario-footer">
               <span class="char-count" x-text="nuevoComentario.length + '/500'"></span>
-              <button class="btn btn-primary btn-sm" @click="enviarComentario()"
+              <button class="btn btn-primary btn-sm" @click="publicarComentario()"
                 :disabled="!nuevoComentario.trim() || enviandoComentario">
                 <span x-show="!enviandoComentario">Comentar</span>
                 <span x-show="enviandoComentario">Enviando...</span>
@@ -184,7 +184,7 @@
           </template>
 
           <!-- Sin comentarios -->
-          <template x-if="!loadingComentarios && comentariosArbol.length === 0">
+          <template x-if="!loadingComentarios && comentarios.length === 0">
             <div class="comentarios-vacios">
               <span>🤫</span>
               <p>Sé el primero en comentar esta captura.</p>
@@ -192,8 +192,8 @@
           </template>
 
           <!-- Lista de comentarios anidados -->
-          <div class="comentarios-lista" x-show="!loadingComentarios && comentariosArbol.length > 0">
-            <template x-for="comentario in comentariosArbol" :key="comentario.id">
+          <div class="comentarios-lista" x-show="!loadingComentarios && comentarios.length > 0">
+            <template x-for="comentario in comentarios" :key="comentario.id">
               <div class="comentario-hilo">
 
                 <!-- ── Comentario principal (nivel 1) ── -->
@@ -207,7 +207,7 @@
                         <span x-text="(comentario.autor?.nombre || '?').charAt(0).toUpperCase()"></span>
                       </template>
                     </div>
-                    <div class="hilo-linea" x-show="comentario.respuestas && comentario.respuestas.length > 0"></div>
+                    <div class="hilo-linea" x-show="comentario.respuestasCount > 0"></div>
                   </div>
 
                   <div class="comentario-cuerpo">
@@ -216,24 +216,64 @@
                         x-text="comentario.autor?.nombre || 'Usuario'"></a>
                       <span class="comentario-fecha" x-text="formatFecha(comentario.fechaCreacion)"></span>
 
-                      <!-- Botones de editar y eliminar: solo visibles para el autor -->
+                      <!-- Menú ⋯: solo visible para el autor -->
                       <template x-if="esPropio(comentario)">
-                        <div class="comentario-acciones-propias">
-                          <!-- Botón editar: abre el modal con el texto actual -->
-                          <button class="btn-accion-comentario btn-editar" @click="abrirEdicion(comentario)"
-                            title="Editar comentario">✏️</button>
-                          <!-- Botón eliminar -->
-                          <button class="btn-accion-comentario btn-eliminar" @click="eliminarComentario(comentario)"
-                            title="Eliminar comentario">🗑️</button>
+                        <div class="comentario-menu-wrap" @click.stop>
+                          <button class="comentario-menu-btn"
+                            @click="comentario._menuAbierto = !comentario._menuAbierto">⋯</button>
+                          <div class="comentario-dropdown" x-show="comentario._menuAbierto"
+                            @click.away="comentario._menuAbierto = false" x-cloak>
+                            <button @click="editarComentario(comentario); comentario._menuAbierto = false">✏️
+                              Editar</button>
+                            <button class="danger"
+                              @click="eliminarComentario(comentario); comentario._menuAbierto = false">🗑️
+                              Eliminar</button>
+                          </div>
                         </div>
                       </template>
                     </div>
 
-                    <p class="comentario-texto" x-text="comentario.contenido"></p>
+                    <!-- Texto normal (cuando no se está editando) -->
+                    <template x-if="comentarioEditando?.id !== comentario.id">
+                      <p class="comentario-texto" x-text="comentario.contenido"></p>
+                    </template>
+
+                    <!-- Edición inline (reemplaza el texto cuando se está editando) -->
+                    <template x-if="comentarioEditando?.id === comentario.id">
+                      <div class="comentario-edicion-inline">
+                        <textarea class="comentario-input comentario-input-sm" x-model="textoEditando" rows="2"
+                          maxlength="500" @keydown.ctrl.enter="guardarEdicion()" @keydown.escape="cancelarEdicion()"
+                          x-effect="$el.focus()"></textarea>
+                        <div class="nuevo-comentario-footer">
+                          <span class="char-count" x-text="textoEditando.length + '/500'"></span>
+                          <div style="display:flex; gap:0.5rem;">
+                            <button class="btn btn-secondary btn-sm" @click="cancelarEdicion()"
+                              :disabled="enviandoEdicion">Cancelar</button>
+                            <button class="btn btn-primary btn-sm" @click="guardarEdicion()"
+                              :disabled="!textoEditando.trim() || enviandoEdicion">
+                              <span x-show="!enviandoEdicion">Guardar</span>
+                              <span x-show="enviandoEdicion">Guardando...</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
 
                     <button class="btn-responder" @click="toggleResponder(comentario)">
                       <span x-text="respondiendo === comentario.id ? 'Cancelar' : '↩ Responder'"></span>
                     </button>
+
+                    <!-- Botón "Ver X respuestas" — lazy load -->
+                    <template x-if="comentario.respuestasCount > 0 && !comentario._respuestasCargadas">
+                      <button class="comentario-ver-respuestas" @click="cargarRespuestas(comentario)"
+                        :disabled="comentario._cargandoRespuestas">
+                        <span x-show="!comentario._cargandoRespuestas">
+                          💬 Ver <span x-text="comentario.respuestasCount"></span> respuesta<span
+                            x-show="comentario.respuestasCount > 1">s</span>
+                        </span>
+                        <span x-show="comentario._cargandoRespuestas">Cargando...</span>
+                      </button>
+                    </template>
                   </div>
                 </div>
 
@@ -249,16 +289,16 @@
                     <div class="nuevo-comentario-footer">
                       <span class="char-count" x-text="textoRespuesta.length + '/500'"></span>
                       <button class="btn btn-primary btn-sm" @click="enviarRespuesta(comentario.id)"
-                        :disabled="!textoRespuesta.trim() || enviandoRespuesta">
-                        <span x-show="!enviandoRespuesta">Responder</span>
-                        <span x-show="enviandoRespuesta">Enviando...</span>
+                        :disabled="!textoRespuesta.trim() || enviandoComentario">
+                        <span x-show="!enviandoComentario">Responder</span>
+                        <span x-show="enviandoComentario">Enviando...</span>
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <!-- ── Respuestas anidadas (nivel 2) ── -->
-                <template x-if="comentario.respuestas && comentario.respuestas.length > 0">
+                <!-- ── Respuestas anidadas (nivel 2) — solo una vez cargadas ── -->
+                <template x-if="comentario._respuestasCargadas && comentario.respuestas?.length > 0">
                   <div class="respuestas-anidadas">
                     <template x-for="respuesta in comentario.respuestas" :key="respuesta.id">
                       <div class="comentario-card comentario-respuesta" :class="{ 'propio': esPropio(respuesta) }">
@@ -278,17 +318,46 @@
                               x-text="respuesta.autor?.nombre || 'Usuario'"></a>
                             <span class="comentario-fecha" x-text="formatFecha(respuesta.fechaCreacion)"></span>
 
-                            <!-- Botones editar/eliminar para respuestas propias -->
+                            <!-- Menú ⋯ para respuestas propias -->
                             <template x-if="esPropio(respuesta)">
-                              <div class="comentario-acciones-propias">
-                                <button class="btn-accion-comentario btn-editar" @click="abrirEdicion(respuesta)"
-                                  title="Editar respuesta">✏️</button>
-                                <button class="btn-accion-comentario btn-eliminar" @click="eliminarComentario(respuesta)"
-                                  title="Eliminar respuesta">🗑️</button>
+                              <div class="comentario-menu-wrap" @click.stop>
+                                <button class="comentario-menu-btn"
+                                  @click="respuesta._menuAbierto = !respuesta._menuAbierto">⋯</button>
+                                <div class="comentario-dropdown" x-show="respuesta._menuAbierto"
+                                  @click.away="respuesta._menuAbierto = false" x-cloak>
+                                  <button @click="editarComentario(respuesta); respuesta._menuAbierto = false">✏️
+                                    Editar</button>
+                                  <button class="danger"
+                                    @click="eliminarComentario(respuesta); respuesta._menuAbierto = false">🗑️
+                                    Eliminar</button>
+                                </div>
                               </div>
                             </template>
                           </div>
-                          <p class="comentario-texto" x-text="respuesta.contenido"></p>
+
+                          <template x-if="comentarioEditando?.id !== respuesta.id">
+                            <p class="comentario-texto" x-text="respuesta.contenido"></p>
+                          </template>
+
+                          <template x-if="comentarioEditando?.id === respuesta.id">
+                            <div class="comentario-edicion-inline">
+                              <textarea class="comentario-input comentario-input-sm" x-model="textoEditando" rows="2"
+                                maxlength="500" @keydown.ctrl.enter="guardarEdicion()"
+                                @keydown.escape="cancelarEdicion()" x-effect="$el.focus()"></textarea>
+                              <div class="nuevo-comentario-footer">
+                                <span class="char-count" x-text="textoEditando.length + '/500'"></span>
+                                <div style="display:flex; gap:0.5rem;">
+                                  <button class="btn btn-secondary btn-sm" @click="cancelarEdicion()"
+                                    :disabled="enviandoEdicion">Cancelar</button>
+                                  <button class="btn btn-primary btn-sm" @click="guardarEdicion()"
+                                    :disabled="!textoEditando.trim() || enviandoEdicion">
+                                    <span x-show="!enviandoEdicion">Guardar</span>
+                                    <span x-show="enviandoEdicion">Guardando...</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </template>
                         </div>
                       </div>
                     </template>
@@ -301,9 +370,9 @@
 
           <!-- Cargar más comentarios -->
           <div class="cargar-mas-wrap" x-show="hayMasComentarios && !loadingComentarios">
-            <button class="btn btn-secondary btn-sm" @click="cargarMasComentarios()" :disabled="loadingMas">
-              <span x-show="!loadingMas">Cargar más comentarios</span>
-              <span x-show="loadingMas">Cargando...</span>
+            <button class="btn btn-secondary btn-sm" @click="cargarMasComentarios(postId, TAMANO_COMENTARIOS)" :disabled="loadingMasComentarios">
+              <span x-show="!loadingMasComentarios">Cargar más comentarios</span>
+              <span x-show="loadingMasComentarios">Cargando...</span>
             </button>
           </div>
 
@@ -312,54 +381,6 @@
       </div>
     </template>
 
-  </div>
-
-  <!-- ══════════════════════════════════════════════════════════
-       MODAL DE EDICIÓN DE COMENTARIO
-       
-       Funciona como una ventana flotante sobre el resto de la página.
-       El overlay oscuro de fondo se llama "backdrop" y al hacer clic
-       en él se cierra el modal (igual que cerrar un menú tocando fuera).
-       ══════════════════════════════════════════════════════════ -->
-  <div class="modal-edicion-overlay" x-show="modalEdicionAbierto" x-transition:enter="modal-enter"
-    x-transition:enter-start="modal-enter-start" x-transition:enter-end="modal-enter-end"
-    x-transition:leave="modal-leave" x-transition:leave-start="modal-leave-start"
-    x-transition:leave-end="modal-leave-end" @click.self="cerrarEdicion()" @keydown.escape.window="cerrarEdicion()"
-    style="display: none;">
-    <div class="modal-edicion-card">
-
-      <!-- Cabecera del modal -->
-      <div class="modal-edicion-header">
-        <h3 class="modal-edicion-titulo">✏️ Editar comentario</h3>
-        <button class="modal-edicion-cerrar" @click="cerrarEdicion()" title="Cerrar">✕</button>
-      </div>
-
-      <!-- Cuerpo: textarea con el texto actual -->
-      <div class="modal-edicion-body">
-        <textarea class="comentario-input modal-edicion-textarea" x-model="textoEdicion"
-          placeholder="Escribe tu comentario..." rows="4" maxlength="500" @keydown.ctrl.enter="guardarEdicion()"
-          @keydown.escape="cerrarEdicion()" x-effect="if (modalEdicionAbierto) $el.focus()"></textarea>
-        <div class="modal-edicion-footer-info">
-          <!-- Contador de caracteres -->
-          <span class="char-count" x-text="textoEdicion.length + '/500'"></span>
-          <!-- Atajo de teclado como pista visual -->
-          <span class="modal-edicion-hint">Ctrl + Enter para guardar · Esc para cancelar</span>
-        </div>
-      </div>
-
-      <!-- Pie: botones de acción -->
-      <div class="modal-edicion-footer">
-        <button class="btn btn-secondary btn-sm" @click="cerrarEdicion()" :disabled="enviandoEdicion">
-          Cancelar
-        </button>
-        <button class="btn btn-primary btn-sm" @click="guardarEdicion()"
-          :disabled="!textoEdicion.trim() || enviandoEdicion">
-          <span x-show="!enviandoEdicion">Guardar cambios</span>
-          <span x-show="enviandoEdicion">Guardando...</span>
-        </button>
-      </div>
-
-    </div>
   </div>
 
   <!-- ── TOASTS ─────────────────────────────────────────────── -->
@@ -390,6 +411,7 @@
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/comentarios-mixin.js"></script>
   <script src="js/pages/post.js"></script>
   <script>Utils.initTheme(); document.querySelector('.theme-toggle').textContent = Utils.getThemeIcon();</script>
 

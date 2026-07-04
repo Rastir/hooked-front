@@ -465,7 +465,7 @@
                     </button>
                     <div class="action-btn">
                         <span>💬</span>
-                        <span x-text="(lightbox.comentarios?.length || 0) + ' comentarios'"></span>
+                        <span x-text="(comentarios?.length || 0) + ' comentarios'"></span>
                     </div>
                     <button class="action-btn"
                         @click="sharePost(lightbox.post)"><span>🔗</span><span>Compartir</span></button>
@@ -473,14 +473,14 @@
                             completo</span></a>
                 </div>
                 <div class="lightbox-comentarios">
-                    <template x-if="lightbox.loadingComentarios">
+                    <template x-if="loadingComentarios">
                         <div class="lightbox-loading">Cargando comentarios...</div>
                     </template>
-                    <div class="lightbox-comentarios-lista" x-show="!lightbox.loadingComentarios">
-                        <template x-if="lightbox.comentarios.length === 0">
+                    <div class="lightbox-comentarios-lista" x-show="!loadingComentarios">
+                        <template x-if="comentarios.length === 0">
                             <p class="lightbox-sin-comentarios">Sé el primero en comentar 🎣</p>
                         </template>
-                        <template x-for="comentario in lightbox.comentarios" :key="comentario.id">
+                        <template x-for="comentario in comentarios" :key="comentario.id">
                             <div>
                                 <!-- Comentario nivel 1 -->
                                 <div class="lightbox-comentario">
@@ -495,35 +495,35 @@
                                         <div class="lightbox-comentario-meta">
                                             <span class="lightbox-comentario-autor"
                                                 x-text="comentario.autor?.nombre"></span>
-                                            <template x-if="esPropioLightbox(comentario)">
+                                            <template x-if="esPropio(comentario)">
                                                 <div class="lightbox-menu-wrap" @click.stop>
                                                     <button class="lightbox-menu-btn"
                                                         @click="comentario._menuAbierto = !comentario._menuAbierto">⋯</button>
                                                     <div class="lightbox-dropdown" x-show="comentario._menuAbierto"
                                                         @click.away="comentario._menuAbierto = false">
                                                         <button
-                                                            @click="editarComentarioLightbox(comentario); comentario._menuAbierto = false">✏️
+                                                            @click="editarComentario(comentario); comentario._menuAbierto = false">✏️
                                                             Editar</button>
                                                         <button class="danger"
-                                                            @click="eliminarComentarioLightbox(comentario); comentario._menuAbierto = false">🗑️
+                                                            @click="eliminarComentario(comentario); comentario._menuAbierto = false">🗑️
                                                             Eliminar</button>
                                                     </div>
                                                 </div>
                                             </template>
                                         </div>
-                                        <template x-if="lightbox.comentarioEditando?.id !== comentario.id">
+                                        <template x-if="comentarioEditando?.id !== comentario.id">
                                             <p class="lightbox-comentario-texto" x-text="comentario.contenido"></p>
                                         </template>
-                                        <template x-if="lightbox.comentarioEditando?.id === comentario.id">
+                                        <template x-if="comentarioEditando?.id === comentario.id">
                                             <div
                                                 style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.25rem;">
-                                                <textarea class="lightbox-textarea" x-model="lightbox.textoEditando"
+                                                <textarea class="lightbox-textarea" x-model="textoEditando"
                                                     rows="2" maxlength="500"></textarea>
                                                 <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
                                                     <button class="btn btn-ghost btn-sm"
-                                                        @click="cancelarEdicionLightbox()">Cancelar</button>
+                                                        @click="cancelarEdicion()">Cancelar</button>
                                                     <button class="btn btn-primary btn-sm"
-                                                        @click="guardarEdicionLightbox()">Guardar</button>
+                                                        @click="guardarEdicion()">Guardar</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -533,7 +533,7 @@
                                 <!-- Botón lazy load de respuestas -->
                                 <template x-if="comentario.respuestasCount > 0 && !comentario._respuestasCargadas">
                                     <button class="lightbox-ver-respuestas"
-                                        @click="cargarRespuestasLightbox(comentario)"
+                                        @click="cargarRespuestas(comentario)"
                                         :disabled="comentario._cargandoRespuestas">
                                         <span x-show="!comentario._cargandoRespuestas">
                                             💬 Ver <span x-text="comentario.respuestasCount"></span> respuesta<span
@@ -559,7 +559,7 @@
                                                     <div class="lightbox-comentario-meta">
                                                         <span class="lightbox-comentario-autor"
                                                             x-text="respuesta.autor?.nombre"></span>
-                                                        <template x-if="esPropioLightbox(respuesta)">
+                                                        <template x-if="esPropio(respuesta)">
                                                             <div class="lightbox-menu-wrap" @click.stop>
                                                                 <button class="lightbox-menu-btn"
                                                                     @click="respuesta._menuAbierto = !respuesta._menuAbierto">⋯</button>
@@ -567,31 +567,31 @@
                                                                     x-show="respuesta._menuAbierto"
                                                                     @click.away="respuesta._menuAbierto = false">
                                                                     <button
-                                                                        @click="editarComentarioLightbox(respuesta); respuesta._menuAbierto = false">✏️
+                                                                        @click="editarComentario(respuesta); respuesta._menuAbierto = false">✏️
                                                                         Editar</button>
                                                                     <button class="danger"
-                                                                        @click="eliminarRespuestaLightbox(respuesta, comentario); respuesta._menuAbierto = false">🗑️
+                                                                        @click="eliminarComentario(respuesta); respuesta._menuAbierto = false">🗑️
                                                                         Eliminar</button>
                                                                 </div>
                                                             </div>
                                                         </template>
                                                     </div>
-                                                    <template x-if="lightbox.comentarioEditando?.id !== respuesta.id">
+                                                    <template x-if="comentarioEditando?.id !== respuesta.id">
                                                         <p class="lightbox-comentario-texto"
                                                             x-text="respuesta.contenido"></p>
                                                     </template>
-                                                    <template x-if="lightbox.comentarioEditando?.id === respuesta.id">
+                                                    <template x-if="comentarioEditando?.id === respuesta.id">
                                                         <div
                                                             style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.25rem;">
                                                             <textarea class="lightbox-textarea"
-                                                                x-model="lightbox.textoEditando" rows="2"
+                                                                x-model="textoEditando" rows="2"
                                                                 maxlength="500"></textarea>
                                                             <div
                                                                 style="display:flex; gap:0.5rem; justify-content:flex-end;">
                                                                 <button class="btn btn-ghost btn-sm"
-                                                                    @click="cancelarEdicionLightbox()">Cancelar</button>
+                                                                    @click="cancelarEdicion()">Cancelar</button>
                                                                 <button class="btn btn-primary btn-sm"
-                                                                    @click="guardarEdicionLightbox()">Guardar</button>
+                                                                    @click="guardarEdicion()">Guardar</button>
                                                             </div>
                                                         </div>
                                                     </template>
@@ -610,13 +610,13 @@
                                     x-text="(user?.nombre || '?').charAt(0).toUpperCase()"></span></template>
                         </div>
                         <div class="lightbox-input-wrap">
-                            <textarea class="lightbox-textarea" x-model="lightbox.nuevoComentario"
+                            <textarea class="lightbox-textarea" x-model="nuevoComentario"
                                 placeholder="Escribe un comentario... 🎣" rows="2" maxlength="500"
                                 @keydown.ctrl.enter="enviarComentarioLightbox()"></textarea>
                             <button class="btn btn-primary btn-sm" @click="enviarComentarioLightbox()"
-                                :disabled="!lightbox.nuevoComentario.trim() || lightbox.enviando">
-                                <span x-show="!lightbox.enviando">Comentar</span>
-                                <span x-show="lightbox.enviando">...</span>
+                                :disabled="!nuevoComentario.trim() || enviandoComentario">
+                                <span x-show="!enviandoComentario">Comentar</span>
+                                <span x-show="enviandoComentario">...</span>
                             </button>
                         </div>
                     </div>
@@ -653,6 +653,7 @@
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/comentarios-mixin.js"></script>
     <script src="js/pages/feed.js"></script>
     <script>
         Utils.initTheme();
